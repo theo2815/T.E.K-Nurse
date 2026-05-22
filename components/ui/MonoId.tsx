@@ -12,7 +12,7 @@ export function MonoId({
   const sizing = size === "sm" ? "text-caps-sm" : "text-caps-md";
   return (
     <span
-      className={`font-mono uppercase ${sizing} text-navy ${className}`}
+      className={`font-mono uppercase ${sizing} text-navy font-semibold ${className}`}
     >
       {id}
     </span>

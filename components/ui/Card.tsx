@@ -2,11 +2,11 @@ type Variant = "default" | "alert" | "pending";
 
 const VARIANT: Record<Variant, string> = {
   default:
-    "bg-paper border border-rule hover:border-amber hover:-translate-y-px",
+    "bg-paper border-[1.5px] border-rule hover:border-teal hover:-translate-y-px",
   alert:
-    "bg-paper border border-rule border-l-4 border-l-brick",
+    "bg-paper border-[1.5px] border-rule border-l-4 border-l-red",
   pending:
-    "bg-paper border border-rule opacity-85",
+    "bg-paper border-[1.5px] border-rule opacity-85",
 };
 
 export function Card({
@@ -20,7 +20,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded p-4 md:p-6 transition-[transform,border-color] duration-150 ease-out ${VARIANT[variant]} ${className}`}
+      className={`rounded p-5 md:p-6 transition-[transform,border-color] duration-150 ease-out ${VARIANT[variant]} ${className}`}
     >
       {children}
     </div>

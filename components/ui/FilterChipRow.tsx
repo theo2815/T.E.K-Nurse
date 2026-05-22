@@ -35,7 +35,7 @@ export function FilterChipRow({
             {active && (
               <span
                 aria-hidden
-                className="absolute left-0 right-0 -bottom-[1px] h-[2px] bg-amber"
+                className="absolute left-0 right-0 -bottom-[1px] h-[2px] bg-teal"
               />
             )}
           </button>

@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
-import { Fraunces, Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
+import { Montserrat, Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const display = Fraunces({
+const display = Montserrat({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
-  axes: ["opsz", "SOFT", "WONK"],
+  weight: ["600", "700", "800"],
+  style: ["normal", "italic"],
 });
 
-const body = Be_Vietnam_Pro({
+const body = Manrope({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const mono = JetBrains_Mono({
@@ -23,9 +24,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "T.E.K Nurse — Equipment & Consumables",
+  title: "T.E.K Nurse — Equipment In-Out Inventory",
   description:
-    "Equipment and consumables inventory for the school nursing lab. QR-based borrow, FIFO consumables, audit log.",
+    "Equipment and consumables in-out inventory management system for the school nursing lab.",
 };
 
 export default function RootLayout({

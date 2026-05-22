@@ -1,58 +1,63 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   T.E.K Nurse — Card Catalog theme tokens
-   See vault: Design/Tokens.md, Design/Design Direction.md
+   T.E.K Nurse — Clinical Console theme tokens
+   See vault: Design/Design Direction.md, Design/Tokens.md.
    Tailwind v4 generates utilities (bg-*, text-*, border-*, font-*, text-*,
    rounded-*) from the @theme block below.
 --------------------------------------------------------------------------- */
 
 @theme {
-  /* Color */
-  --color-navy:   #0B1F3A;
-  --color-cream:  #F4EFE6;
-  --color-paper:  #FBF7EF;
-  --color-amber:  #D4A24C;
-  --color-olive:  #5C6B3B;
-  --color-brick:  #A8412B;
-  --color-brick-bold: #902B19; /* AA-safe for small text */
-  --color-slate:  #2E3849;
-  --color-rule:   #C8BFAD;
-  --color-ink:    #14181F;
+  /* Color — drawn from the official logo */
+  --color-navy:       #1F3A6E;  /* primary text + headers (from logo wordmark) */
+  --color-navy-deep:  #152849;  /* deepest emphasis */
+  --color-teal:       #38B6BC;  /* THE accent — buttons, FAB, active states */
+  --color-teal-deep:  #2A8E94;  /* teal hover/active */
+  --color-cyan:       #87D1D5;  /* subtle accent, status fills */
+  --color-mist:       #F0F4F8;  /* page background (slight off-white) */
+  --color-paper:      #F8FAFC;  /* card surface (lighter than mist) */
+  --color-slate:      #475569;  /* secondary text */
+  --color-rule:       #CBD5E1;  /* hairline borders / dividers */
+  --color-red:        #E53935;  /* danger / overdue (from logo medical cross) */
+  --color-red-deep:   #B91C1C;  /* deeper red for small text + emphasis */
+  --color-green:      #0EA968;  /* available / success */
+  --color-ink:        #0F172A;  /* deepest text */
 
   /* Font families (resolved from next/font CSS variables in layout.tsx) */
   --font-display: var(--font-display);
   --font-body:    var(--font-body);
   --font-mono:    var(--font-mono);
 
-  /* Card Catalog type scale */
-  --text-hero: 96px;
+  /* Clinical Console type scale — italic display sizes trimmed
+     because Montserrat italic gets aggressive at large sizes */
+  --text-hero: 88px;
   --text-hero--line-height: 0.95;
   --text-hero--letter-spacing: -0.02em;
 
-  --text-display-lg: 64px;
+  --text-display-lg: 56px;
   --text-display-lg--line-height: 1.05;
   --text-display-lg--letter-spacing: -0.015em;
 
-  --text-display: 36px;
-  --text-display--line-height: 1.1;
+  --text-display: 32px;
+  --text-display--line-height: 1.15;
   --text-display--letter-spacing: -0.01em;
 
   --text-caps-sm: 11px;
   --text-caps-sm--line-height: 1;
-  --text-caps-sm--letter-spacing: 0.08em;
+  --text-caps-sm--letter-spacing: 0.1em;
 
   --text-caps-md: 13px;
   --text-caps-md--line-height: 1.2;
-  --text-caps-md--letter-spacing: 0.05em;
+  --text-caps-md--letter-spacing: 0.06em;
 
-  /* Radii — slight, archival */
-  --radius: 4px;
+  /* Radii — softer than Card Catalog (8px) to match modern medical-device feel */
+  --radius: 8px;
+  --radius-sm: 4px;
   --radius-fab: 9999px;
 }
 
 /* ---------------------------------------------------------------------------
-   Page surface — cream + faint paper noise
+   Page surface — clean clinical mist, no texture
 --------------------------------------------------------------------------- */
 
 html, body {
@@ -60,11 +65,18 @@ html, body {
 }
 
 body {
-  background-color: var(--color-cream);
-  background-image: url('/textures/paper-noise.svg');
-  background-repeat: repeat;
-  background-size: 240px 240px;
-  background-blend-mode: multiply;
+  background-color: var(--color-mist);
+  /* Atmospheric layer — faint cyan scan-line texture, echoes the
+     heart-rate monitor + QR-scan motif from the logo. Sits under
+     every card; cards use bg-paper so they cover the scan lines. */
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(135, 209, 213, 0.07) 0px,
+      rgba(135, 209, 213, 0.07) 1px,
+      transparent 1px,
+      transparent 4px
+    );
   color: var(--color-navy);
   font-family: var(--font-body), system-ui, sans-serif;
   font-size: 16px;
@@ -74,12 +86,14 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
-   Base typography defaults — Fraunces for headings, mono for IDs/captions
+   Base typography defaults — Montserrat italic for headings (echoes the
+   logo wordmark), JetBrains Mono for IDs and captions.
 --------------------------------------------------------------------------- */
 
 h1, h2, h3, h4 {
-  font-family: var(--font-display), Georgia, serif;
-  font-weight: 500;
+  font-family: var(--font-display), Helvetica, Arial, sans-serif;
+  font-weight: 800;
+  font-style: italic;
   color: var(--color-navy);
   letter-spacing: -0.01em;
 }
@@ -89,19 +103,39 @@ code, kbd, samp, pre {
 }
 
 ::selection {
-  background: var(--color-amber);
-  color: var(--color-navy);
+  background: var(--color-teal);
+  color: #FFFFFF;
 }
 
-/* Hairline default — gives <hr> the Card Catalog feel */
+/* Hairline default — used for dividers and section breaks */
 hr {
   border: 0;
   border-top: 1px solid var(--color-rule);
 }
 
-/* Focus rings everywhere use amber, no blue browser default */
+/* Focus rings everywhere use teal */
 *:focus-visible {
-  outline: 2px solid var(--color-amber);
+  outline: 2px solid var(--color-teal);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 4px;
+}
+
+/* ---------------------------------------------------------------------------
+   Popover entry — used by DateField and any future floating element.
+   Subtle fade + 4px drop for "device readout switching" feel.
+--------------------------------------------------------------------------- */
+
+@keyframes tek-fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tek-pop {
+  animation: tek-fade-in-down 120ms ease-out;
 }

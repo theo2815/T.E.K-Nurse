@@ -24,12 +24,12 @@ export function FAB({
         type="button"
         onClick={onClick}
         aria-label={ariaLabel ?? label}
-        className={`${dim} rounded-fab bg-amber text-navy flex items-center justify-center hover:bg-[#bc8e3f] active:bg-[#a37b35] transition-colors`}
+        className={`${dim} rounded-fab bg-teal text-white flex items-center justify-center hover:bg-teal-deep active:bg-navy-deep transition-colors`}
       >
-        <QrCode size={24} strokeWidth={1.5} />
+        <QrCode size={24} strokeWidth={1.75} />
       </button>
       {label && (
-        <span className="font-mono uppercase text-[10px] tracking-[0.08em] text-navy">
+        <span className="font-mono uppercase text-[10px] tracking-[0.08em] text-navy font-semibold">
           {label}
         </span>
       )}

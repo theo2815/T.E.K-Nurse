@@ -13,11 +13,11 @@ const BASE =
 
 const VARIANT: Record<Variant, string> = {
   primary:
-    "bg-amber text-navy font-mono uppercase text-[13px] tracking-[0.08em] font-semibold px-6 py-4 rounded hover:bg-[#bc8e3f] active:bg-[#a37b35]",
+    "bg-teal text-white font-mono uppercase text-[15px] tracking-[0.12em] font-bold px-6 py-4 rounded hover:bg-teal-deep active:bg-navy-deep",
   secondary:
-    "bg-transparent text-navy border border-navy text-sm font-medium px-6 py-4 rounded hover:bg-paper hover:border-[1.5px]",
+    "bg-transparent text-navy border-[1.5px] border-navy text-[15px] font-bold px-6 py-4 rounded hover:bg-paper hover:border-teal hover:text-teal-deep",
   tertiary:
-    "text-navy text-sm font-medium px-1 py-0.5 hover:underline underline-offset-4 decoration-amber decoration-2",
+    "text-navy text-[15px] font-bold px-1 py-0.5 hover:underline underline-offset-4 decoration-teal decoration-2",
 };
 
 export const Button = forwardRef<HTMLButtonElement, Props>(function Button(

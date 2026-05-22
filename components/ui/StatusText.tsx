@@ -8,23 +8,31 @@ export type Status =
   | "OVERDUE"
   | "LOST"
   | "RETURNED"
+  | "RETURNED LATE"
   | "EXPIRED"
   | "SKIPPED"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "DECLINED"
+  | "PENDING PICKUP"
+  | "APPROVED";
 
 const STATUS_STYLE: Record<Status, { text: string; bg: string }> = {
-  AVAILABLE:    { text: "text-olive",      bg: "bg-olive" },
-  BORROWED:     { text: "text-slate",      bg: "bg-slate" },
-  RESERVED:     { text: "text-slate",      bg: "bg-slate" },
-  "LOW STOCK":  { text: "text-brick-bold", bg: "bg-brick-bold" },
-  OUT:          { text: "text-slate",      bg: "bg-slate" },
-  MAINTENANCE:  { text: "text-slate",      bg: "bg-slate" },
-  OVERDUE:      { text: "text-brick-bold", bg: "bg-brick-bold" },
-  LOST:         { text: "text-brick-bold", bg: "bg-brick-bold" },
-  RETURNED:     { text: "text-olive",      bg: "bg-olive" },
-  EXPIRED:      { text: "text-slate",      bg: "bg-slate" },
-  SKIPPED:      { text: "text-slate",      bg: "bg-slate" },
-  CANCELLED:    { text: "text-slate",      bg: "bg-slate" },
+  AVAILABLE:          { text: "text-green",    bg: "bg-green" },
+  BORROWED:           { text: "text-slate",    bg: "bg-slate" },
+  RESERVED:           { text: "text-slate",    bg: "bg-slate" },
+  "LOW STOCK":        { text: "text-red-deep", bg: "bg-red-deep" },
+  OUT:                { text: "text-slate",    bg: "bg-slate" },
+  MAINTENANCE:        { text: "text-slate",    bg: "bg-slate" },
+  OVERDUE:            { text: "text-red-deep", bg: "bg-red-deep" },
+  LOST:               { text: "text-red-deep", bg: "bg-red-deep" },
+  RETURNED:           { text: "text-green",    bg: "bg-green" },
+  "RETURNED LATE":    { text: "text-green",    bg: "bg-green" },
+  EXPIRED:            { text: "text-slate",    bg: "bg-slate" },
+  SKIPPED:            { text: "text-slate",    bg: "bg-slate" },
+  CANCELLED:          { text: "text-slate",    bg: "bg-slate" },
+  DECLINED:           { text: "text-red-deep", bg: "bg-red-deep" },
+  "PENDING PICKUP":   { text: "text-slate",    bg: "bg-slate" },
+  APPROVED:           { text: "text-green",    bg: "bg-green" },
 };
 
 export function StatusText({
@@ -44,7 +52,7 @@ export function StatusText({
       {emphatic && (
         <span
           aria-hidden
-          className={`inline-block size-2 ${bg}`}
+          className={`inline-block size-2 rounded-sm ${bg}`}
         />
       )}
       {status}
