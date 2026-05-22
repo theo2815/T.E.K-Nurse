@@ -7,6 +7,7 @@ import {
   Pencil,
   Activity,
   Clock,
+  QrCode,
 } from "lucide-react";
 import {
   type EquipmentSku,
@@ -143,7 +144,10 @@ export function EquipmentSkuDetail({
                 openBorrows={openBorrows}
                 pendingRequests={pendingRequests}
               />
-              <StaffActions lastActivity={lastActivity ?? null} />
+              <StaffActions
+                lastActivity={lastActivity ?? null}
+                qrCode={sku.qr_code}
+              />
             </>
           )}
 
@@ -249,8 +253,10 @@ function StudentActions({ sku }: { sku: EquipmentSku }) {
 
 function StaffActions({
   lastActivity,
+  qrCode,
 }: {
   lastActivity: EquipmentActivity | null;
+  qrCode: string;
 }) {
   return (
     <div className="flex flex-col gap-5">
@@ -285,6 +291,16 @@ function StaffActions({
           <p className="text-[14px] text-slate italic">No activity yet.</p>
         )}
       </div>
+
+      <Link
+        href={`/print/equipment/${encodeURIComponent(qrCode)}`}
+        target="_blank"
+        rel="noopener"
+        className="inline-flex items-center justify-center gap-2 bg-transparent text-navy border-[1.5px] border-navy font-mono uppercase text-[14px] tracking-[0.12em] font-bold px-5 py-3 rounded transition-colors hover:bg-paper hover:border-teal hover:text-teal-deep"
+      >
+        <QrCode size={16} strokeWidth={1.75} />
+        Print QR
+      </Link>
 
       <button
         type="button"

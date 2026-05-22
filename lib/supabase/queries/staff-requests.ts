@@ -5,6 +5,7 @@ export type RequestType = "equipment" | "consumable";
 export type StaffRequestStatus =
   | "PENDING_PICKUP"
   | "APPROVED"
+  | "RELEASED"
   | "EXPIRED"
   | "SKIPPED"
   | "CANCELLED"
@@ -21,6 +22,14 @@ export type StaffPendingRequestRow = {
   notes: string | null;
   decline_reason: string | null;
   created_at: string;
+  /** Approval attribution (slice #3). Populated once status ∈ {APPROVED, RELEASED, EXPIRED}. */
+  approved_at: string | null;
+  approved_by_name: string | null;
+  /** Pickup code (slice #4). Set on approval, cleared semantically once RELEASED. */
+  pickup_code: string | null;
+  pickup_expires_at: string | null;
+  released_at: string | null;
+  released_by_name: string | null;
   sku: {
     id: string;
     qr_code: string;
@@ -42,6 +51,11 @@ type StudentJoin =
   | { id: string; full_name: string; email: string; year_section: string | null }[]
   | null;
 
+type UserJoin =
+  | { full_name: string }
+  | { full_name: string }[]
+  | null;
+
 type EquipmentJoin = {
   id: string;
   quantity: number;
@@ -52,6 +66,12 @@ type EquipmentJoin = {
   notes: string | null;
   decline_reason: string | null;
   created_at: string;
+  approved_at: string | null;
+  pickup_code: string | null;
+  pickup_expires_at: string | null;
+  released_at: string | null;
+  approver: UserJoin;
+  releaser: UserJoin;
   equipment_sku:
     | {
         id: string;
@@ -80,6 +100,12 @@ type ConsumableJoin = {
   notes: string | null;
   decline_reason: string | null;
   created_at: string;
+  approved_at: string | null;
+  pickup_code: string | null;
+  pickup_expires_at: string | null;
+  released_at: string | null;
+  approver: UserJoin;
+  releaser: UserJoin;
   consumable_sku:
     | {
         id: string;
@@ -102,10 +128,10 @@ type ConsumableJoin = {
 };
 
 const EQUIPMENT_SELECT =
-  "id, quantity, borrow_date, expected_return_date, status, expires_at, notes, decline_reason, created_at, equipment_sku ( id, qr_code, name, description, photo_url ), student:student_id ( id, full_name, email, year_section )";
+  "id, quantity, borrow_date, expected_return_date, status, expires_at, notes, decline_reason, created_at, approved_at, pickup_code, pickup_expires_at, released_at, approver:approved_by ( full_name ), releaser:released_by ( full_name ), equipment_sku ( id, qr_code, name, description, photo_url ), student:student_id ( id, full_name, email, year_section )";
 
 const CONSUMABLE_SELECT =
-  "id, quantity, borrow_date, status, expires_at, notes, decline_reason, created_at, consumable_sku ( id, qr_code, name, description, photo_url, unit ), student:student_id ( id, full_name, email, year_section )";
+  "id, quantity, borrow_date, status, expires_at, notes, decline_reason, created_at, approved_at, pickup_code, pickup_expires_at, released_at, approver:approved_by ( full_name ), releaser:released_by ( full_name ), consumable_sku ( id, qr_code, name, description, photo_url, unit ), student:student_id ( id, full_name, email, year_section )";
 
 function unwrapStudent(s: StudentJoin) {
   if (!s) return { id: "", full_name: "Unknown", email: "", year_section: null };
@@ -118,8 +144,15 @@ function unwrapSku<T>(s: T | T[] | null): T | null {
   return Array.isArray(s) ? s[0] ?? null : s;
 }
 
+function unwrapUser(u: UserJoin): { full_name: string } | null {
+  if (!u) return null;
+  return Array.isArray(u) ? u[0] ?? null : u;
+}
+
 function mapEquipment(r: EquipmentJoin): StaffPendingRequestRow {
   const sku = unwrapSku(r.equipment_sku);
+  const approver = unwrapUser(r.approver);
+  const releaser = unwrapUser(r.releaser);
   return {
     id: r.id,
     type: "equipment",
@@ -131,6 +164,12 @@ function mapEquipment(r: EquipmentJoin): StaffPendingRequestRow {
     notes: r.notes,
     decline_reason: r.decline_reason,
     created_at: r.created_at,
+    approved_at: r.approved_at,
+    approved_by_name: approver?.full_name ?? null,
+    pickup_code: r.pickup_code,
+    pickup_expires_at: r.pickup_expires_at,
+    released_at: r.released_at,
+    released_by_name: releaser?.full_name ?? null,
     sku: {
       id: sku?.id ?? "",
       qr_code: sku?.qr_code ?? "",
@@ -145,6 +184,8 @@ function mapEquipment(r: EquipmentJoin): StaffPendingRequestRow {
 
 function mapConsumable(r: ConsumableJoin): StaffPendingRequestRow {
   const sku = unwrapSku(r.consumable_sku);
+  const approver = unwrapUser(r.approver);
+  const releaser = unwrapUser(r.releaser);
   return {
     id: r.id,
     type: "consumable",
@@ -156,6 +197,12 @@ function mapConsumable(r: ConsumableJoin): StaffPendingRequestRow {
     notes: r.notes,
     decline_reason: r.decline_reason,
     created_at: r.created_at,
+    approved_at: r.approved_at,
+    approved_by_name: approver?.full_name ?? null,
+    pickup_code: r.pickup_code,
+    pickup_expires_at: r.pickup_expires_at,
+    released_at: r.released_at,
+    released_by_name: releaser?.full_name ?? null,
     sku: {
       id: sku?.id ?? "",
       qr_code: sku?.qr_code ?? "",
@@ -255,17 +302,56 @@ export async function listPendingRequestsForEquipmentSku(
   return ((data ?? []) as unknown as EquipmentJoin[]).map(mapEquipment);
 }
 
+/** APPROVED-but-not-yet-released requests for a single equipment SKU. Used by
+ *  the scan flow to surface "student at counter with code" verifications. */
+export async function listAwaitingPickupForEquipmentSku(
+  equipmentSkuId: string,
+): Promise<StaffPendingRequestRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("borrow_request")
+    .select(EQUIPMENT_SELECT)
+    .eq("status", "APPROVED")
+    .eq("equipment_sku_id", equipmentSkuId)
+    .order("approved_at", { ascending: true });
+  if (error) throw error;
+  return ((data ?? []) as unknown as EquipmentJoin[]).map(mapEquipment);
+}
+
+/** APPROVED-but-not-yet-released requests for a single consumable SKU. */
+export async function listAwaitingPickupForConsumableSku(
+  consumableSkuId: string,
+): Promise<StaffPendingRequestRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("consumable_request")
+    .select(CONSUMABLE_SELECT)
+    .eq("status", "APPROVED")
+    .eq("consumable_sku_id", consumableSkuId)
+    .order("approved_at", { ascending: true });
+  if (error) throw error;
+  return ((data ?? []) as unknown as ConsumableJoin[]).map(mapConsumable);
+}
+
 export type StudentSearchRow = {
   id: string;
   full_name: string;
   email: string;
   year_section: string | null;
+  /** Count of borrow_transaction rows in OVERDUE or LOST status for this
+   *  student. Populated only by searchStudents / getStudentById — pre-existing
+   *  joins on request/transaction rows leave it undefined. Surfaced in the
+   *  walk-in modals so staff sees the block before submitting. */
+  overdue_count?: number;
 };
 
 /**
  * Typeahead search over verified active students.
  * Returns up to 10 matches against full_name OR email (case-insensitive).
  * Empty / short queries return [].
+ *
+ * Each row is enriched with overdue_count so the walk-in modals can show a
+ * pre-submit warning when the student is blocked from borrowing.
  */
 export async function searchStudents(q: string): Promise<StudentSearchRow[]> {
   const query = q.trim();
@@ -285,7 +371,8 @@ export async function searchStudents(q: string): Promise<StudentSearchRow[]> {
     .limit(10);
 
   if (error) throw error;
-  return (data ?? []) as StudentSearchRow[];
+  const rows = (data ?? []) as StudentSearchRow[];
+  return attachOverdueCounts(supabase, rows);
 }
 
 export async function getStudentById(
@@ -299,7 +386,29 @@ export async function getStudentById(
     .eq("role", "student")
     .maybeSingle();
   if (error) throw error;
-  return (data as StudentSearchRow) ?? null;
+  if (!data) return null;
+  const [enriched] = await attachOverdueCounts(supabase, [data as StudentSearchRow]);
+  return enriched ?? null;
+}
+
+async function attachOverdueCounts(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  rows: StudentSearchRow[],
+): Promise<StudentSearchRow[]> {
+  if (rows.length === 0) return rows;
+  const ids = rows.map((r) => r.id);
+  const { data, error } = await supabase
+    .from("borrow_transaction")
+    .select("student_id")
+    .in("status", ["OVERDUE", "LOST"])
+    .in("student_id", ids);
+  if (error) throw error;
+
+  const counts = new Map<string, number>();
+  for (const row of (data ?? []) as { student_id: string }[]) {
+    counts.set(row.student_id, (counts.get(row.student_id) ?? 0) + 1);
+  }
+  return rows.map((r) => ({ ...r, overdue_count: counts.get(r.id) ?? 0 }));
 }
 
 export type OpenBorrowRow = {
@@ -361,6 +470,75 @@ export async function getPendingRequestCounts(): Promise<PendingCountByType> {
       .from("consumable_request")
       .select("id", { count: "exact", head: true })
       .eq("status", "PENDING_PICKUP"),
+  ]);
+  if (eq.error) throw eq.error;
+  if (cn.error) throw cn.error;
+  const equipment = eq.count ?? 0;
+  const consumable = cn.count ?? 0;
+  return { equipment, consumable, total: equipment + consumable };
+}
+
+/**
+ * All APPROVED-but-not-yet-released requests. Ordered by pickup_expires_at
+ * ascending so the most-urgent (expiring soonest) shows first.
+ * type='all' returns equipment + consumable merged.
+ */
+export async function listAwaitingPickupRequests(
+  opts: { type?: RequestType | "all" } = {},
+): Promise<StaffPendingRequestRow[]> {
+  const supabase = await createClient();
+  const type = opts.type ?? "all";
+
+  const eqPromise =
+    type === "consumable"
+      ? Promise.resolve({ data: [] as EquipmentJoin[], error: null })
+      : supabase
+          .from("borrow_request")
+          .select(EQUIPMENT_SELECT)
+          .eq("status", "APPROVED")
+          .order("pickup_expires_at", { ascending: true });
+
+  const cnPromise =
+    type === "equipment"
+      ? Promise.resolve({ data: [] as ConsumableJoin[], error: null })
+      : supabase
+          .from("consumable_request")
+          .select(CONSUMABLE_SELECT)
+          .eq("status", "APPROVED")
+          .order("pickup_expires_at", { ascending: true });
+
+  const [eqRes, cnRes] = await Promise.all([eqPromise, cnPromise]);
+  if (eqRes.error) throw eqRes.error;
+  if (cnRes.error) throw cnRes.error;
+
+  const equipment = ((eqRes.data ?? []) as unknown as EquipmentJoin[]).map(
+    mapEquipment,
+  );
+  const consumable = ((cnRes.data ?? []) as unknown as ConsumableJoin[]).map(
+    mapConsumable,
+  );
+
+  if (type === "equipment") return equipment;
+  if (type === "consumable") return consumable;
+
+  return [...equipment, ...consumable].sort((a, b) => {
+    const ax = a.pickup_expires_at ?? "";
+    const bx = b.pickup_expires_at ?? "";
+    return ax.localeCompare(bx);
+  });
+}
+
+export async function getAwaitingPickupCounts(): Promise<PendingCountByType> {
+  const supabase = await createClient();
+  const [eq, cn] = await Promise.all([
+    supabase
+      .from("borrow_request")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "APPROVED"),
+    supabase
+      .from("consumable_request")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "APPROVED"),
   ]);
   if (eq.error) throw eq.error;
   if (cn.error) throw cn.error;

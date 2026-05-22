@@ -14,7 +14,9 @@ export type Status =
   | "CANCELLED"
   | "DECLINED"
   | "PENDING PICKUP"
-  | "APPROVED";
+  | "APPROVED"
+  | "READY TO COLLECT"
+  | "PICKED UP";
 
 const STATUS_STYLE: Record<Status, { text: string; bg: string }> = {
   AVAILABLE:          { text: "text-green",    bg: "bg-green" },
@@ -33,6 +35,8 @@ const STATUS_STYLE: Record<Status, { text: string; bg: string }> = {
   DECLINED:           { text: "text-red-deep", bg: "bg-red-deep" },
   "PENDING PICKUP":   { text: "text-slate",    bg: "bg-slate" },
   APPROVED:           { text: "text-green",    bg: "bg-green" },
+  "READY TO COLLECT": { text: "text-amber-700",bg: "bg-amber" },
+  "PICKED UP":        { text: "text-green",    bg: "bg-green" },
 };
 
 export function StatusText({

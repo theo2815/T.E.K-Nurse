@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Montserrat, Manrope, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const display = Montserrat({
@@ -37,7 +38,17 @@ export default function RootLayout({
       lang="en"
       className={`${display.variable} ${body.variable} ${mono.variable}`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <Toaster
+          position="top-center"
+          richColors
+          closeButton
+          toastOptions={{
+            className: "font-mono uppercase tracking-[0.04em]",
+          }}
+        />
+      </body>
     </html>
   );
 }

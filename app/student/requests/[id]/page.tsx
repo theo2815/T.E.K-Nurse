@@ -10,6 +10,7 @@ import { MonoId } from "@/components/ui/MonoId";
 import { StatusText, type Status } from "@/components/ui/StatusText";
 import { SpeedLines } from "@/components/SpeedLines";
 import { CancelButton } from "@/components/requests/CancelButton";
+import { PickupCodeCard } from "@/components/student/PickupCodeCard";
 
 function parseType(v: string | undefined): RequestType {
   return v === "consumable" ? "consumable" : "equipment";
@@ -149,6 +150,13 @@ export default async function StudentRequestDetailPage({
           </section>
         )}
 
+        {req.status === "APPROVED" && req.pickup_code && req.pickup_expires_at && (
+          <PickupCodeCard
+            code={req.pickup_code}
+            expiresAt={req.pickup_expires_at}
+          />
+        )}
+
         {req.status === "APPROVED" && req.approved_at && (
           <section className="border-l-4 border-green bg-paper rounded p-5 flex flex-col gap-2">
             <p className="inline-flex items-center gap-2 font-mono uppercase text-caps-sm text-green font-semibold tracking-[0.1em]">
@@ -158,6 +166,24 @@ export default async function StudentRequestDetailPage({
             <p className="text-[15px] text-slate">
               {formatApprovedAt(req.approved_at)}
               {req.approved_by_name && <> · by {req.approved_by_name}</>}
+            </p>
+          </section>
+        )}
+
+        {req.status === "RELEASED" && req.released_at && (
+          <section className="border-l-4 border-green bg-paper rounded p-5 flex flex-col gap-2">
+            <p className="inline-flex items-center gap-2 font-mono uppercase text-caps-sm text-green font-semibold tracking-[0.1em]">
+              <CheckCircle2 size={16} strokeWidth={2} />
+              Picked up
+            </p>
+            <p className="text-[15px] text-slate">
+              {formatApprovedAt(req.released_at)}
+              {req.type === "equipment" && req.expected_return_date && (
+                <> · return by {formatDate(req.expected_return_date)}</>
+              )}
+            </p>
+            <p className="text-[14px] text-slate">
+              See <Link href="/student/history" className="text-teal font-semibold underline underline-offset-2 hover:text-teal-deep">your history</Link> for the open borrow.
             </p>
           </section>
         )}

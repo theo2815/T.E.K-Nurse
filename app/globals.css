@@ -54,6 +54,9 @@
   --radius: 8px;
   --radius-sm: 4px;
   --radius-fab: 9999px;
+
+  /* Animations */
+  --animate-tek-scan: tek-scan 1.6s ease-in-out infinite;
 }
 
 /* ---------------------------------------------------------------------------
@@ -138,4 +141,49 @@ hr {
 
 .tek-pop {
   animation: tek-fade-in-down 120ms ease-out;
+}
+
+/* ---------------------------------------------------------------------------
+   QR scan-line — sweeps top-to-bottom inside the camera reticle on
+   /staff/scan. Uses `top` (animatable) since the reticle parent has a
+   percentage-based height we can't predict.
+--------------------------------------------------------------------------- */
+
+@keyframes tek-scan {
+  0%   { top: 0; opacity: 0.4; }
+  50%  { top: calc(100% - 2px); opacity: 1; }
+  100% { top: 0; opacity: 0.4; }
+}
+
+/* ---------------------------------------------------------------------------
+   QR scanner — html5-qrcode injects a <video> with its native stream
+   dimensions (16:9 webcam, 4:3 phone). To fill our square camera surface,
+   pin the video as position: absolute with inset 0 + object-fit: cover so
+   it ignores intrinsic dimensions and just covers the positioned ancestor.
+   Also hide any overlays the library tries to inject — we render our own
+   cyan reticle in React.
+--------------------------------------------------------------------------- */
+
+#tek-qr-reader {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: hidden;
+}
+
+#tek-qr-reader video {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* Hide html5-qrcode's own scan-region overlay if it shows up */
+#tek-qr-reader > div > img,
+#tek-qr-reader #qr-shaded-region,
+#tek-qr-reader [id^="qr-shaded"] {
+  display: none !important;
 }

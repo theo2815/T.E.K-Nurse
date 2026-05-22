@@ -3,14 +3,26 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { AlertTriangle, ArrowRight, Check } from "lucide-react";
+import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
 import { DateField } from "@/components/ui/DateField";
+import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 import { StudentPicker } from "@/components/staff/StudentPicker";
 import { overrideBorrow } from "@/app/staff/actions";
 import type {
   StaffPendingRequestRow,
   StudentSearchRow,
 } from "@/lib/supabase/queries/staff-requests";
+
+export type OverrideSuccessActivity = {
+  kind: "override";
+  sku: { qr_code: string; name: string; photo_url: string | null };
+  student: { full_name: string };
+  skippedStudent: { full_name: string };
+  quantity: number;
+  expected_return_date: string;
+  at: number;
+};
 
 function todayIso(): string {
   const d = new Date();
@@ -32,15 +44,26 @@ function addDays(iso: string, days: number): string {
 type Props = {
   open: boolean;
   onClose: () => void;
-  sku: { id: string; qr_code: string; name: string };
+  sku: { id: string; qr_code: string; name: string; photo_url: string | null };
   pendingRequests: StaffPendingRequestRow[];
+  onSuccess?: (activity: OverrideSuccessActivity) => void;
 };
+
+function formatDueShort(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export function OverrideModal({
   open,
   onClose,
   sku,
   pendingRequests,
+  onSuccess,
 }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -69,6 +92,10 @@ export function OverrideModal({
     if (!canSubmit || !skipped || !student) return;
     setError(null);
     startTransition(async () => {
+      const skippedStudent = skipped.student.full_name;
+      const newStudent = student.full_name;
+      const due = returnDate;
+      const qty = quantity;
       const res = await overrideBorrow({
         skip_request_id: skipped.id,
         equipment_sku_id: sku.id,
@@ -80,6 +107,22 @@ export function OverrideModal({
         setError(res.error);
         return;
       }
+      toast.success(`Override lent ${sku.qr_code}`, {
+        description: `To ${newStudent} · Skipped ${skippedStudent} · Due ${formatDueShort(due)}`,
+      });
+      onSuccess?.({
+        kind: "override",
+        sku: {
+          qr_code: sku.qr_code,
+          name: sku.name,
+          photo_url: sku.photo_url,
+        },
+        student: { full_name: newStudent },
+        skippedStudent: { full_name: skippedStudent },
+        quantity: qty,
+        expected_return_date: due,
+        at: Date.now(),
+      });
       onClose();
       router.refresh();
     });
@@ -121,6 +164,23 @@ export function OverrideModal({
       }
     >
       <div className="flex flex-col gap-6">
+        <div className="flex items-center gap-4">
+          <PhotoFrame
+            src={sku.photo_url}
+            alt={sku.name}
+            size="thumb"
+            className="shrink-0"
+          />
+          <div className="flex flex-col gap-1 min-w-0">
+            <p className="font-mono uppercase text-caps-sm font-semibold tracking-[0.08em] text-navy">
+              {sku.qr_code}
+            </p>
+            <p className="text-[15px] text-navy font-semibold truncate">
+              {sku.name}
+            </p>
+          </div>
+        </div>
+
         <div className="flex items-start gap-3 border-l-4 border-amber bg-paper rounded px-4 py-3 text-[14px] text-slate">
           <AlertTriangle
             size={18}
@@ -128,9 +188,8 @@ export function OverrideModal({
             className="mt-0.5 shrink-0 text-amber"
           />
           <span>
-            All units of <span className="font-semibold text-navy">{sku.name}</span>{" "}
-            are held for pending requests. Pick one reservation to release, then
-            lend the freed units to your walk-in.
+            All units are held for pending requests. Pick one reservation to
+            release, then lend the freed units to your walk-in.
           </span>
         </div>
 

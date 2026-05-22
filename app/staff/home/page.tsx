@@ -143,8 +143,6 @@ export default async function StaffHomePage() {
             href="/staff/scan"
             label="Scan"
             icon={<QrCode size={18} strokeWidth={1.75} />}
-            note="Phase 6"
-            disabled
           />
         </section>
 

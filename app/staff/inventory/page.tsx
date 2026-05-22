@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { QrCode } from "lucide-react";
 import {
   listEquipmentSkus,
   getEquipmentSummary,
@@ -13,6 +15,20 @@ import { CatalogControls } from "@/components/catalog/CatalogControls";
 import { CatalogTypeTabs } from "@/components/catalog/CatalogTypeTabs";
 import { EquipmentList } from "@/components/catalog/EquipmentList";
 import { ConsumableList } from "@/components/catalog/ConsumableList";
+
+function PrintBatchAction() {
+  return (
+    <Link
+      href="/print/batch"
+      target="_blank"
+      rel="noopener"
+      className="inline-flex items-center justify-center gap-2 bg-transparent text-navy border-[1.5px] border-navy font-mono uppercase text-[14px] tracking-[0.12em] font-bold px-5 py-3 rounded transition-colors hover:bg-paper hover:border-teal hover:text-teal-deep self-start"
+    >
+      <QrCode size={16} strokeWidth={1.75} />
+      Print QR batch
+    </Link>
+  );
+}
 
 const EQUIPMENT_CHIPS = [
   { value: "ALL", label: "All" },
@@ -83,11 +99,14 @@ export default async function StaffInventoryPage({
 
     return (
       <div className="mx-auto max-w-5xl px-6 md:px-12 py-12 md:py-16 flex flex-col gap-8">
-        <CatalogHeader
-          eyebrow="Inventory"
-          title="Stock"
-          overview={`${summary.total} equipment units · ${summary.available} available · ${summary.borrowed} out`}
-        />
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <CatalogHeader
+            eyebrow="Inventory"
+            title="Stock"
+            overview={`${summary.total} equipment units · ${summary.available} available · ${summary.borrowed} out`}
+          />
+          <PrintBatchAction />
+        </div>
         <CatalogTypeTabs tabs={tabs} active={tab} />
         <CatalogControls
           chips={EQUIPMENT_CHIPS}
@@ -110,11 +129,14 @@ export default async function StaffInventoryPage({
 
   return (
     <div className="mx-auto max-w-5xl px-6 md:px-12 py-12 md:py-16 flex flex-col gap-8">
-      <CatalogHeader
-        eyebrow="Inventory"
-        title="Stock"
-        overview={`${summary.sku_count} consumable SKUs · ${summary.in_stock_count} in stock · ${summary.low_stock_count} low`}
-      />
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <CatalogHeader
+          eyebrow="Inventory"
+          title="Stock"
+          overview={`${summary.sku_count} consumable SKUs · ${summary.in_stock_count} in stock · ${summary.low_stock_count} low`}
+        />
+        <PrintBatchAction />
+      </div>
       <CatalogTypeTabs tabs={tabs} active={tab} />
       <CatalogControls
         chips={CONSUMABLE_CHIPS}

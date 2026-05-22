@@ -12,6 +12,8 @@ type TabConfig<T extends string = string> = {
  * Tab strip used by My Requests (student) and the Pending Queue (staff).
  * The tab whose value === `defaultTab` is the bare-path tab (no query string).
  * Other tabs append `?<paramName>=<value>` (paramName defaults to "tab").
+ * Pass `extraParams` to preserve other filters when the strip changes — e.g.
+ * a stage tab strip + a type filter strip stacked on the same page.
  */
 export function RequestsTabs<T extends string>({
   tabs,
@@ -19,21 +21,35 @@ export function RequestsTabs<T extends string>({
   basePath,
   defaultTab,
   paramName = "tab",
+  extraParams,
 }: {
   tabs: TabConfig<T>[];
   active: T;
   basePath: string;
   defaultTab: T;
   paramName?: string;
+  extraParams?: Record<string, string | undefined>;
 }) {
+  const extraQs = extraParams
+    ? Object.entries(extraParams)
+        .filter(([, v]) => v != null && v !== "")
+        .map(
+          ([k, v]) =>
+            `${encodeURIComponent(k)}=${encodeURIComponent(v as string)}`,
+        )
+        .join("&")
+    : "";
+
   return (
     <div role="tablist" className="flex gap-8 border-b border-rule">
       {tabs.map((t) => {
         const isActive = t.value === active;
-        const href =
-          t.value === defaultTab
-            ? basePath
-            : `${basePath}?${paramName}=${t.value}`;
+        const parts: string[] = [];
+        if (t.value !== defaultTab) {
+          parts.push(`${paramName}=${encodeURIComponent(t.value)}`);
+        }
+        if (extraQs) parts.push(extraQs);
+        const href = parts.length === 0 ? basePath : `${basePath}?${parts.join("&")}`;
         return (
           <Link
             key={t.value}

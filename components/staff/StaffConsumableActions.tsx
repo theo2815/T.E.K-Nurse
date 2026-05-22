@@ -11,6 +11,7 @@ type Props = {
     | "id"
     | "qr_code"
     | "name"
+    | "photo_url"
     | "unit"
     | "total_remaining"
     | "per_request_max_quantity"

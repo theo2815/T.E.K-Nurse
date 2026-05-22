@@ -8,6 +8,9 @@ const PUBLIC_PATHS = [
   "/reset-password",
   "/auth/callback",
   "/design-system",
+  // /s/* is the QR short-URL redirector. The page itself handles auth so it
+  // can preserve the scanned QR through login via ?next=.
+  "/s",
 ];
 
 function isPublicPath(pathname: string) {
@@ -89,6 +92,12 @@ export async function updateSession(request: NextRequest) {
     if (role === "staff" && pathname.startsWith("/student")) {
       const url = request.nextUrl.clone();
       url.pathname = "/staff/home";
+      return NextResponse.redirect(url);
+    }
+    // /print/* is staff-only (QR print previews). Students bounce home.
+    if (role === "student" && pathname.startsWith("/print")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/student/home";
       return NextResponse.redirect(url);
     }
   }

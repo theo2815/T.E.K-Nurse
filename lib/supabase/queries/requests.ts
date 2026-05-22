@@ -5,6 +5,7 @@ export type RequestType = "equipment" | "consumable";
 export type EquipmentRequestStatus =
   | "PENDING_PICKUP"
   | "APPROVED"
+  | "RELEASED"
   | "EXPIRED"
   | "SKIPPED"
   | "CANCELLED"
@@ -13,6 +14,7 @@ export type EquipmentRequestStatus =
 export type ConsumableRequestStatus =
   | "PENDING_PICKUP"
   | "APPROVED"
+  | "RELEASED"
   | "EXPIRED"
   | "CANCELLED"
   | "DECLINED";
@@ -32,6 +34,13 @@ export type MyRequestRow = {
   notes: string | null;
   decline_reason: string | null;
   created_at: string;
+  /** Approval timestamp — populated when status ∈ {APPROVED, RELEASED, EXPIRED}. */
+  approved_at: string | null;
+  /** Pickup code (shown on student page when status = APPROVED). */
+  pickup_code: string | null;
+  /** When the pickup code expires (24h after approval). Null pre-approval. */
+  pickup_expires_at: string | null;
+  released_at: string | null;
   sku: {
     id: string;
     qr_code: string;
@@ -52,6 +61,10 @@ type EquipmentRow = {
   notes: string | null;
   decline_reason: string | null;
   created_at: string;
+  approved_at: string | null;
+  pickup_code: string | null;
+  pickup_expires_at: string | null;
+  released_at: string | null;
   equipment_sku: {
     id: string;
     qr_code: string;
@@ -70,6 +83,10 @@ type ConsumableRow = {
   notes: string | null;
   decline_reason: string | null;
   created_at: string;
+  approved_at: string | null;
+  pickup_code: string | null;
+  pickup_expires_at: string | null;
+  released_at: string | null;
   consumable_sku: {
     id: string;
     qr_code: string;
@@ -80,9 +97,12 @@ type ConsumableRow = {
   };
 };
 
-const PENDING_STATUSES: RequestStatus[] = ["PENDING_PICKUP"];
+// PENDING tab now includes APPROVED — the student has a pickup code and an
+// open task (go to the lab). RELEASED is the moment the item is in hand and
+// the request lifecycle is complete; it lives in PAST alongside terminations.
+const PENDING_STATUSES: RequestStatus[] = ["PENDING_PICKUP", "APPROVED"];
 const PAST_STATUSES: RequestStatus[] = [
-  "APPROVED",
+  "RELEASED",
   "EXPIRED",
   "SKIPPED",
   "CANCELLED",
@@ -90,10 +110,10 @@ const PAST_STATUSES: RequestStatus[] = [
 ];
 
 const EQUIPMENT_SELECT =
-  "id, quantity, borrow_date, expected_return_date, status, expires_at, notes, decline_reason, created_at, equipment_sku ( id, qr_code, name, description, photo_url )";
+  "id, quantity, borrow_date, expected_return_date, status, expires_at, notes, decline_reason, created_at, approved_at, pickup_code, pickup_expires_at, released_at, equipment_sku ( id, qr_code, name, description, photo_url )";
 
 const CONSUMABLE_SELECT =
-  "id, quantity, borrow_date, status, expires_at, notes, decline_reason, created_at, consumable_sku ( id, qr_code, name, description, photo_url, unit )";
+  "id, quantity, borrow_date, status, expires_at, notes, decline_reason, created_at, approved_at, pickup_code, pickup_expires_at, released_at, consumable_sku ( id, qr_code, name, description, photo_url, unit )";
 
 function mapEquipment(r: EquipmentRow): MyRequestRow {
   return {
@@ -107,6 +127,10 @@ function mapEquipment(r: EquipmentRow): MyRequestRow {
     notes: r.notes,
     decline_reason: r.decline_reason,
     created_at: r.created_at,
+    approved_at: r.approved_at,
+    pickup_code: r.pickup_code,
+    pickup_expires_at: r.pickup_expires_at,
+    released_at: r.released_at,
     sku: {
       id: r.equipment_sku.id,
       qr_code: r.equipment_sku.qr_code,
@@ -130,6 +154,10 @@ function mapConsumable(r: ConsumableRow): MyRequestRow {
     notes: r.notes,
     decline_reason: r.decline_reason,
     created_at: r.created_at,
+    approved_at: r.approved_at,
+    pickup_code: r.pickup_code,
+    pickup_expires_at: r.pickup_expires_at,
+    released_at: r.released_at,
     sku: {
       id: r.consumable_sku.id,
       qr_code: r.consumable_sku.qr_code,
@@ -181,8 +209,7 @@ export async function listMyRequests(opts: {
 }
 
 export type MyRequestDetail = MyRequestRow & {
-  /** Only set when status = APPROVED — joined from the resulting transaction/usage. */
-  approved_at: string | null;
+  /** Name of the staff who approved the request — joined via approved_by. */
   approved_by_name: string | null;
 };
 
@@ -199,76 +226,40 @@ export async function getMyRequestById(opts: {
   if (opts.type === "equipment") {
     const { data, error } = await supabase
       .from("borrow_request")
-      .select(EQUIPMENT_SELECT)
+      .select(`${EQUIPMENT_SELECT}, approver:approved_by ( full_name )`)
       .eq("id", opts.id)
       .eq("student_id", user.id)
       .maybeSingle();
     if (error) throw error;
     if (!data) return null;
+
     const base = mapEquipment(data as unknown as EquipmentRow);
-
-    let approved_at: string | null = null;
-    let approved_by_name: string | null = null;
-    if (base.status === "APPROVED") {
-      const { data: tx } = await supabase
-        .from("borrow_transaction")
-        .select("borrowed_at, approved_by_user:approved_by ( full_name )")
-        .eq("source_request_id", base.id)
-        .maybeSingle();
-      if (tx) {
-        const row = tx as unknown as {
-          borrowed_at: string;
-          approved_by_user:
-            | { full_name: string }
-            | { full_name: string }[]
-            | null;
-        };
-        approved_at = row.borrowed_at;
-        const user = Array.isArray(row.approved_by_user)
-          ? row.approved_by_user[0] ?? null
-          : row.approved_by_user;
-        approved_by_name = user?.full_name ?? null;
-      }
-    }
-
-    return { ...base, approved_at, approved_by_name };
+    const row = data as unknown as {
+      approver: { full_name: string } | { full_name: string }[] | null;
+    };
+    const approver = Array.isArray(row.approver)
+      ? row.approver[0] ?? null
+      : row.approver;
+    return { ...base, approved_by_name: approver?.full_name ?? null };
   }
 
   const { data, error } = await supabase
     .from("consumable_request")
-    .select(CONSUMABLE_SELECT)
+    .select(`${CONSUMABLE_SELECT}, approver:approved_by ( full_name )`)
     .eq("id", opts.id)
     .eq("student_id", user.id)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
+
   const base = mapConsumable(data as unknown as ConsumableRow);
-
-  let approved_at: string | null = null;
-  let approved_by_name: string | null = null;
-  if (base.status === "APPROVED") {
-    const { data: usage } = await supabase
-      .from("consumable_usage")
-      .select("used_at, approved_by_user:approved_by ( full_name )")
-      .eq("source_request_id", base.id)
-      .maybeSingle();
-    if (usage) {
-      const row = usage as unknown as {
-        used_at: string;
-        approved_by_user:
-          | { full_name: string }
-          | { full_name: string }[]
-          | null;
-      };
-      approved_at = row.used_at;
-      const user = Array.isArray(row.approved_by_user)
-        ? row.approved_by_user[0] ?? null
-        : row.approved_by_user;
-      approved_by_name = user?.full_name ?? null;
-    }
-  }
-
-  return { ...base, approved_at, approved_by_name };
+  const row = data as unknown as {
+    approver: { full_name: string } | { full_name: string }[] | null;
+  };
+  const approver = Array.isArray(row.approver)
+    ? row.approver[0] ?? null
+    : row.approver;
+  return { ...base, approved_by_name: approver?.full_name ?? null };
 }
 
 export function requestStatusLabel(s: RequestStatus): string {
@@ -276,7 +267,9 @@ export function requestStatusLabel(s: RequestStatus): string {
     case "PENDING_PICKUP":
       return "PENDING PICKUP";
     case "APPROVED":
-      return "APPROVED";
+      return "READY TO COLLECT";
+    case "RELEASED":
+      return "PICKED UP";
     case "EXPIRED":
       return "EXPIRED";
     case "SKIPPED":

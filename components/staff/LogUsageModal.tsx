@@ -3,8 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { AlertTriangle, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
 import { QtyStepper } from "@/components/ui/QtyStepper";
+import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 import { StudentPicker } from "@/components/staff/StudentPicker";
 import {
   walkInConsumableUsage,
@@ -12,10 +14,19 @@ import {
 } from "@/app/staff/actions";
 import type { StudentSearchRow } from "@/lib/supabase/queries/staff-requests";
 
+export type UsageSuccessActivity = {
+  kind: "usage";
+  sku: { qr_code: string; name: string; photo_url: string | null; unit: string };
+  student: { full_name: string };
+  quantity: number;
+  at: number;
+};
+
 type SkuShape = {
   id: string;
   qr_code: string;
   name: string;
+  photo_url: string | null;
   unit: string;
   total_remaining: number;
   per_request_max_quantity: number;
@@ -24,6 +35,7 @@ type SkuShape = {
 type WalkInProps = {
   mode: "walk-in";
   sku: SkuShape;
+  onSuccess?: (activity: UsageSuccessActivity) => void;
 };
 
 type ApproveProps = {
@@ -80,9 +92,13 @@ export function LogUsageModal(props: Props) {
   const shortStock =
     !isApprove && props.sku.total_remaining < props.sku.per_request_max_quantity;
 
+  const overdueCount = student?.overdue_count ?? 0;
+  const overdueBlocked = !isApprove && overdueCount > 0;
+
   const canSubmit =
     !pending &&
     !!student &&
+    !overdueBlocked &&
     quantity >= 1 &&
     (isApprove || quantity <= props.sku.total_remaining);
 
@@ -113,6 +129,22 @@ export function LogUsageModal(props: Props) {
           setError(res.error);
           return;
         }
+        const qty = quantity;
+        toast.success(`Logged ${props.sku.qr_code}`, {
+          description: `To ${student.full_name} · ${qty} ${props.sku.unit}`,
+        });
+        props.onSuccess?.({
+          kind: "usage",
+          sku: {
+            qr_code: props.sku.qr_code,
+            name: props.sku.name,
+            photo_url: props.sku.photo_url,
+            unit: props.sku.unit,
+          },
+          student: { full_name: student.full_name },
+          quantity: qty,
+          at: Date.now(),
+        });
         props.onClose();
         router.refresh();
       }
@@ -157,18 +189,24 @@ export function LogUsageModal(props: Props) {
       }
     >
       <div className="flex flex-col gap-5">
-        <div className="flex items-center gap-3 text-[14px] text-slate">
-          <span className="font-mono uppercase text-caps-sm font-semibold tracking-[0.08em] text-navy">
-            {props.sku.qr_code}
-          </span>
-          <span aria-hidden className="size-1 rounded-full bg-slate/40" />
-          <span className="truncate text-navy font-semibold">
-            {props.sku.name}
-          </span>
-          <span aria-hidden className="size-1 rounded-full bg-slate/40" />
-          <span className="font-mono uppercase text-caps-sm text-slate tracking-[0.08em]">
-            {props.sku.total_remaining} {props.sku.unit} on hand
-          </span>
+        <div className="flex items-center gap-4">
+          <PhotoFrame
+            src={props.sku.photo_url}
+            alt={props.sku.name}
+            size="thumb"
+            className="shrink-0"
+          />
+          <div className="flex flex-col gap-1 min-w-0">
+            <p className="font-mono uppercase text-caps-sm font-semibold tracking-[0.08em] text-navy">
+              {props.sku.qr_code}
+            </p>
+            <p className="text-[15px] text-navy font-semibold truncate">
+              {props.sku.name}
+            </p>
+            <p className="font-mono uppercase text-caps-sm text-slate tracking-[0.08em]">
+              {props.sku.total_remaining} {props.sku.unit} on hand
+            </p>
+          </div>
         </div>
 
         {noStock && (
@@ -184,6 +222,25 @@ export function LogUsageModal(props: Props) {
           required
           locked={isApprove}
         />
+
+        {overdueBlocked && student && (
+          <div className="flex items-start gap-3 border-l-4 border-red-deep bg-paper rounded px-4 py-3 text-[14px] text-red-deep">
+            <AlertTriangle size={18} strokeWidth={2} className="mt-0.5 shrink-0" />
+            <div>
+              <p className="font-mono uppercase text-caps-sm font-semibold tracking-[0.08em] mb-1">
+                Student is blocked
+              </p>
+              <p className="text-slate">
+                <span className="font-semibold text-navy">
+                  {student.full_name}
+                </span>{" "}
+                has {overdueCount} overdue item
+                {overdueCount === 1 ? "" : "s"}. They can&apos;t use consumables
+                until returned.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div>
           <p className="text-[15px] text-slate font-bold uppercase tracking-[0.08em] mb-1.5">

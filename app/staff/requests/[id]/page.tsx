@@ -9,6 +9,7 @@ import {
   Mail,
   GraduationCap,
   XCircle,
+  Ticket,
 } from "lucide-react";
 import {
   getPendingRequestById,
@@ -21,6 +22,8 @@ import { StatusText, type Status } from "@/components/ui/StatusText";
 import { SpeedLines } from "@/components/SpeedLines";
 import { ApproveRequestAction } from "@/components/staff/ApproveRequestAction";
 import { DeclineRequestAction } from "@/components/staff/DeclineRequestAction";
+import { VerifyAtPickupAction } from "@/components/staff/VerifyAtPickupAction";
+import { CancelReservationAction } from "@/components/staff/CancelReservationAction";
 
 function parseType(v: string | undefined): RequestType {
   return v === "consumable" ? "consumable" : "equipment";
@@ -60,9 +63,16 @@ function timeAgo(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+function formatCode(code: string): string {
+  const clean = code.replace(/[^0-9A-Z]/gi, "").toUpperCase();
+  if (clean.length === 6) return `${clean.slice(0, 3)}-${clean.slice(3)}`;
+  return clean;
+}
+
 const STATUS_LABEL: Record<string, Status> = {
   PENDING_PICKUP: "PENDING PICKUP",
-  APPROVED: "APPROVED",
+  APPROVED: "READY TO COLLECT",
+  RELEASED: "PICKED UP",
   EXPIRED: "EXPIRED",
   SKIPPED: "SKIPPED",
   CANCELLED: "CANCELLED",
@@ -89,6 +99,7 @@ export default async function StaffRequestDetailPage({
   const statusLabel = STATUS_LABEL[req.status];
   const shortId = req.id.slice(0, 4).toUpperCase();
   const isPending = req.status === "PENDING_PICKUP";
+  const isAwaitingPickup = req.status === "APPROVED";
 
   // Fetch live SKU stock for the approve modal.
   let approveBlock: React.ReactNode = null;
@@ -107,6 +118,9 @@ export default async function StaffRequestDetailPage({
               id: sku.id,
               qr_code: sku.qr_code,
               name: sku.name,
+              photo_url: sku.photo_url,
+              location: sku.location,
+              total_units: sku.total_units,
               available_units: sku.available_units,
               reserved_units: sku.reserved_units,
               borrowed_units: sku.borrowed_units,
@@ -127,6 +141,7 @@ export default async function StaffRequestDetailPage({
               id: result.sku.id,
               qr_code: result.sku.qr_code,
               name: result.sku.name,
+              photo_url: result.sku.photo_url,
               unit: result.sku.unit,
               total_remaining: result.sku.total_remaining,
               per_request_max_quantity: result.sku.per_request_max_quantity,
@@ -158,7 +173,10 @@ export default async function StaffRequestDetailPage({
 
           <div className="mt-1 flex items-baseline justify-between gap-3 flex-wrap">
             <MonoId id={req.sku.qr_code} />
-            <StatusText status={statusLabel} emphatic={isPending} />
+            <StatusText
+              status={statusLabel}
+              emphatic={isPending || isAwaitingPickup}
+            />
           </div>
 
           {/* Student lead — the headline */}
@@ -263,7 +281,9 @@ export default async function StaffRequestDetailPage({
         {isPending && approveBlock && (
           <section className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <p className="text-[14px] text-slate">
-              Approving creates a borrow transaction and notifies the student.
+              Approving sends a pickup code to the student. The borrow
+              transaction is created when you verify the code and release the
+              item at the counter.
             </p>
             <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3">
               <DeclineRequestAction
@@ -289,16 +309,76 @@ export default async function StaffRequestDetailPage({
           </section>
         )}
 
-        {req.status === "APPROVED" && (
-          <section className="border-l-4 border-green bg-paper rounded p-5">
+        {isAwaitingPickup && (
+          <section className="flex flex-col gap-5">
+            <div className="border-[1.5px] border-amber rounded bg-paper overflow-hidden">
+              <header className="bg-amber/15 px-5 py-3 flex items-center justify-between border-b border-amber/40">
+                <p className="inline-flex items-center gap-2 font-mono uppercase text-[11px] tracking-[0.16em] font-bold text-amber-700">
+                  <Ticket size={13} strokeWidth={2} />
+                  Awaiting pickup
+                </p>
+                {req.approved_by_name && req.approved_at && (
+                  <p className="font-mono uppercase text-[10.5px] tracking-[0.12em] font-semibold text-slate">
+                    Approved by {req.approved_by_name} ·{" "}
+                    {timeAgo(req.approved_at)}
+                  </p>
+                )}
+              </header>
+              <div className="px-5 py-5 flex flex-col items-center gap-2 text-center">
+                <p className="font-mono uppercase text-caps-sm text-slate tracking-[0.12em] font-semibold">
+                  Pickup code
+                </p>
+                <p className="font-mono font-bold text-[36px] md:text-[44px] tracking-[0.14em] text-navy leading-none tabular-nums">
+                  {formatCode(req.pickup_code ?? "")}
+                </p>
+                <p className="text-[14px] text-slate max-w-md leading-relaxed">
+                  Student should show this code at the counter. Tap{" "}
+                  <span className="font-semibold text-navy">
+                    Verify &amp; release
+                  </span>{" "}
+                  to compare and hand over the item.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+              <CancelReservationAction
+                type={req.type}
+                request_id={req.id}
+                student_name={req.student.full_name}
+                sku={{ qr_code: req.sku.qr_code, name: req.sku.name }}
+              />
+              <VerifyAtPickupAction request={req} />
+            </div>
+          </section>
+        )}
+
+        {req.status === "RELEASED" && (
+          <section className="border-l-4 border-green bg-paper rounded p-5 flex flex-col gap-2">
             <p className="inline-flex items-center gap-2 font-mono uppercase text-caps-sm text-green font-semibold tracking-[0.1em]">
               <CheckCircle2 size={16} strokeWidth={2} />
-              Approved
+              Released to student
             </p>
-            <p className="mt-1 text-[15px] text-slate">
-              A borrow transaction was created. See it under the student&apos;s
-              history.
+            <p className="text-[15px] text-slate">
+              {req.released_at && (
+                <>
+                  Picked up{" "}
+                  {new Date(req.released_at).toLocaleString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </>
+              )}
+              {req.released_by_name && <> · by {req.released_by_name}</>}
             </p>
+            {req.type === "equipment" && (
+              <p className="text-[14px] text-slate">
+                See the open borrow under the student&apos;s history.
+              </p>
+            )}
           </section>
         )}
 

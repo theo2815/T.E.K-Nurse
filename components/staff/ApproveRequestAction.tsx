@@ -16,6 +16,9 @@ type EquipmentApprove = {
     id: string;
     qr_code: string;
     name: string;
+    photo_url: string | null;
+    location: string | null;
+    total_units: number;
     available_units: number;
     reserved_units: number;
     borrowed_units: number;
@@ -31,6 +34,7 @@ type ConsumableApprove = {
     id: string;
     qr_code: string;
     name: string;
+    photo_url: string | null;
     unit: string;
     total_remaining: number;
     per_request_max_quantity: number;
