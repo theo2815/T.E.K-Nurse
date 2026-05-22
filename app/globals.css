@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   T.E.K Nurse — Card Catalog theme tokens
+   See vault: Design/Tokens.md, Design/Design Direction.md
+   Tailwind v4 generates utilities (bg-*, text-*, border-*, font-*, text-*,
+   rounded-*) from the @theme block below.
+--------------------------------------------------------------------------- */
+
+@theme {
+  /* Color */
+  --color-navy:   #0B1F3A;
+  --color-cream:  #F4EFE6;
+  --color-paper:  #FBF7EF;
+  --color-amber:  #D4A24C;
+  --color-olive:  #5C6B3B;
+  --color-brick:  #A8412B;
+  --color-brick-bold: #902B19; /* AA-safe for small text */
+  --color-slate:  #2E3849;
+  --color-rule:   #C8BFAD;
+  --color-ink:    #14181F;
+
+  /* Font families (resolved from next/font CSS variables in layout.tsx) */
+  --font-display: var(--font-display);
+  --font-body:    var(--font-body);
+  --font-mono:    var(--font-mono);
+
+  /* Card Catalog type scale */
+  --text-hero: 96px;
+  --text-hero--line-height: 0.95;
+  --text-hero--letter-spacing: -0.02em;
+
+  --text-display-lg: 64px;
+  --text-display-lg--line-height: 1.05;
+  --text-display-lg--letter-spacing: -0.015em;
+
+  --text-display: 36px;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.01em;
+
+  --text-caps-sm: 11px;
+  --text-caps-sm--line-height: 1;
+  --text-caps-sm--letter-spacing: 0.08em;
+
+  --text-caps-md: 13px;
+  --text-caps-md--line-height: 1.2;
+  --text-caps-md--letter-spacing: 0.05em;
+
+  /* Radii — slight, archival */
+  --radius: 4px;
+  --radius-fab: 9999px;
+}
+
+/* ---------------------------------------------------------------------------
+   Page surface — cream + faint paper noise
+--------------------------------------------------------------------------- */
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-cream);
+  background-image: url('/textures/paper-noise.svg');
+  background-repeat: repeat;
+  background-size: 240px 240px;
+  background-blend-mode: multiply;
+  color: var(--color-navy);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------------------------------------------------------------------------
+   Base typography defaults — Fraunces for headings, mono for IDs/captions
+--------------------------------------------------------------------------- */
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 500;
+  color: var(--color-navy);
+  letter-spacing: -0.01em;
+}
+
+code, kbd, samp, pre {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+::selection {
+  background: var(--color-amber);
+  color: var(--color-navy);
+}
+
+/* Hairline default — gives <hr> the Card Catalog feel */
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-rule);
+}
+
+/* Focus rings everywhere use amber, no blue browser default */
+*:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
