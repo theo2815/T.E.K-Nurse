@@ -4,9 +4,7 @@ import {
   ArrowRight,
   MapPin,
   AlertTriangle,
-  Pencil,
   Activity,
-  Clock,
   QrCode,
 } from "lucide-react";
 import {
@@ -19,6 +17,8 @@ import { StatusText } from "@/components/ui/StatusText";
 import { SpeedLines } from "@/components/SpeedLines";
 import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 import { StaffEquipmentActions } from "@/components/staff/StaffEquipmentActions";
+import { EquipmentCountActions } from "@/components/inventory/EquipmentCountActions";
+import { EquipmentStaffEditActions } from "@/components/inventory/EquipmentStaffEditActions";
 import type {
   OpenBorrowRow,
   StaffPendingRequestRow,
@@ -144,6 +144,8 @@ export function EquipmentSkuDetail({
                 openBorrows={openBorrows}
                 pendingRequests={pendingRequests}
               />
+              <EquipmentCountActions sku={sku} />
+              <EquipmentStaffEditActions sku={sku} />
               <StaffActions
                 lastActivity={lastActivity ?? null}
                 qrCode={sku.qr_code}
@@ -301,19 +303,6 @@ function StaffActions({
         <QrCode size={16} strokeWidth={1.75} />
         Print QR
       </Link>
-
-      <button
-        type="button"
-        disabled
-        title="Inventory editing arrives in Phase 7"
-        className="inline-flex items-center justify-center gap-2 bg-transparent text-slate border-[1.5px] border-rule font-mono uppercase text-[14px] tracking-[0.12em] font-bold px-5 py-3 rounded opacity-60 cursor-not-allowed"
-      >
-        <Pencil size={16} strokeWidth={1.75} />
-        Edit SKU
-        <span className="inline-flex items-center gap-1 ml-1 font-mono text-caps-sm normal-case tracking-normal text-slate/80">
-          <Clock size={12} strokeWidth={2} /> Phase 7
-        </span>
-      </button>
     </div>
   );
 }

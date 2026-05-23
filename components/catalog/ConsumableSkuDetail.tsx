@@ -4,8 +4,6 @@ import {
   ArrowRight,
   AlertTriangle,
   Activity,
-  Pencil,
-  Clock,
   QrCode,
 } from "lucide-react";
 import {
@@ -19,6 +17,8 @@ import { StatusText } from "@/components/ui/StatusText";
 import { SpeedLines } from "@/components/SpeedLines";
 import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 import { StaffConsumableActions } from "@/components/staff/StaffConsumableActions";
+import { LotList } from "@/components/inventory/LotList";
+import { ConsumableStaffEditActions } from "@/components/inventory/ConsumableStaffEditActions";
 
 function formatDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00Z`);
@@ -142,71 +142,80 @@ export function ConsumableSkuDetail({
             </div>
           </div>
 
-          {/* Lots table */}
-          <div>
-            <p className="font-mono uppercase text-caps-sm font-semibold tracking-[0.1em] text-slate mb-3">
-              Lots (FIFO order)
-            </p>
-            {activeLots.length === 0 ? (
-              <p className="text-[15px] text-slate italic">
-                No active lots. Stock is fully depleted.
+          {/* Lots — staff get full CRUD, students get the read-only FIFO table */}
+          {role === "staff" ? (
+            <LotList
+              skuId={sku.id}
+              skuName={sku.name}
+              lots={lots}
+              warningDays={warningDays}
+            />
+          ) : (
+            <div>
+              <p className="font-mono uppercase text-caps-sm font-semibold tracking-[0.1em] text-slate mb-3">
+                Lots (FIFO order)
               </p>
-            ) : (
-              <div className="border border-rule rounded overflow-hidden">
-                <table className="w-full text-left">
-                  <thead className="bg-mist">
-                    <tr className="font-mono uppercase text-caps-sm font-semibold tracking-[0.08em] text-slate">
-                      <th className="px-4 py-3">Lot</th>
-                      <th className="px-4 py-3">Expires</th>
-                      <th className="px-4 py-3 text-right">Remaining</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-rule">
-                    {activeLots.map((lot) => {
-                      const dDays = daysUntil(lot.expiration_date);
-                      const isExpiring = dDays <= warningDays;
-                      const isExpired = dDays < 0;
-                      return (
-                        <tr key={lot.id} className="bg-paper">
-                          <td className="px-4 py-3 font-mono text-[14px] text-navy">
-                            {lot.lot_number ?? "—"}
-                          </td>
-                          <td className="px-4 py-3 text-[15px]">
-                            <div className="text-navy">
-                              {formatDate(lot.expiration_date)}
-                            </div>
-                            {isExpired ? (
-                              <div className="inline-flex items-center gap-1.5 mt-0.5 font-mono uppercase text-caps-sm font-semibold text-red-deep tracking-[0.08em]">
-                                <AlertTriangle size={12} strokeWidth={2} />
-                                Expired {Math.abs(dDays)}d ago
+              {activeLots.length === 0 ? (
+                <p className="text-[15px] text-slate italic">
+                  No active lots. Stock is fully depleted.
+                </p>
+              ) : (
+                <div className="border border-rule rounded overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead className="bg-mist">
+                      <tr className="font-mono uppercase text-caps-sm font-semibold tracking-[0.08em] text-slate">
+                        <th className="px-4 py-3">Lot</th>
+                        <th className="px-4 py-3">Expires</th>
+                        <th className="px-4 py-3 text-right">Remaining</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-rule">
+                      {activeLots.map((lot) => {
+                        const dDays = daysUntil(lot.expiration_date);
+                        const isExpiring = dDays <= warningDays;
+                        const isExpired = dDays < 0;
+                        return (
+                          <tr key={lot.id} className="bg-paper">
+                            <td className="px-4 py-3 font-mono text-[14px] text-navy">
+                              {lot.lot_number ?? "—"}
+                            </td>
+                            <td className="px-4 py-3 text-[15px]">
+                              <div className="text-navy">
+                                {formatDate(lot.expiration_date)}
                               </div>
-                            ) : isExpiring ? (
-                              <div className="inline-flex items-center gap-1.5 mt-0.5 font-mono uppercase text-caps-sm font-semibold text-red-deep tracking-[0.08em]">
-                                <AlertTriangle size={12} strokeWidth={2} />
-                                In {dDays}d
-                              </div>
-                            ) : (
-                              <div className="mt-0.5 font-mono uppercase text-caps-sm text-slate tracking-[0.08em]">
-                                In {dDays}d
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <span className="font-display italic font-extrabold text-[22px] text-navy">
-                              {lot.quantity_remaining}
-                            </span>
-                            <span className="ml-1 font-mono text-caps-sm text-slate tracking-[0.08em]">
-                              /{lot.quantity_received}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                              {isExpired ? (
+                                <div className="inline-flex items-center gap-1.5 mt-0.5 font-mono uppercase text-caps-sm font-semibold text-red-deep tracking-[0.08em]">
+                                  <AlertTriangle size={12} strokeWidth={2} />
+                                  Expired {Math.abs(dDays)}d ago
+                                </div>
+                              ) : isExpiring ? (
+                                <div className="inline-flex items-center gap-1.5 mt-0.5 font-mono uppercase text-caps-sm font-semibold text-red-deep tracking-[0.08em]">
+                                  <AlertTriangle size={12} strokeWidth={2} />
+                                  In {dDays}d
+                                </div>
+                              ) : (
+                                <div className="mt-0.5 font-mono uppercase text-caps-sm text-slate tracking-[0.08em]">
+                                  In {dDays}d
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <span className="font-display italic font-extrabold text-[22px] text-navy">
+                                {lot.quantity_remaining}
+                              </span>
+                              <span className="ml-1 font-mono text-caps-sm text-slate tracking-[0.08em]">
+                                /{lot.quantity_received}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <aside className="flex flex-col gap-6">
@@ -214,6 +223,7 @@ export function ConsumableSkuDetail({
           {role === "staff" && (
             <>
               <StaffConsumableActions sku={sku} />
+              <ConsumableStaffEditActions sku={sku} />
               <StaffActions
                 lastActivity={lastActivity ?? null}
                 unit={sku.unit}
@@ -347,19 +357,6 @@ function StaffActions({
         <QrCode size={16} strokeWidth={1.75} />
         Print QR
       </Link>
-
-      <button
-        type="button"
-        disabled
-        title="Inventory editing arrives in Phase 7"
-        className="inline-flex items-center justify-center gap-2 bg-transparent text-slate border-[1.5px] border-rule font-mono uppercase text-[14px] tracking-[0.12em] font-bold px-5 py-3 rounded opacity-60 cursor-not-allowed"
-      >
-        <Pencil size={16} strokeWidth={1.75} />
-        Edit SKU
-        <span className="inline-flex items-center gap-1 ml-1 font-mono text-caps-sm normal-case tracking-normal text-slate/80">
-          <Clock size={12} strokeWidth={2} /> Phase 7
-        </span>
-      </button>
     </div>
   );
 }

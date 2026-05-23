@@ -212,16 +212,4 @@ export async function getLastConsumableUsage(
   };
 }
 
-export function consumableRowStatus(
-  sku: Pick<
-    ConsumableSkuWithStock,
-    "total_remaining" | "low_stock_threshold" | "expiring_soon"
-  >,
-):
-  | "AVAILABLE"
-  | "LOW STOCK"
-  | "OUT" {
-  if (sku.total_remaining === 0) return "OUT";
-  if (sku.total_remaining < sku.low_stock_threshold) return "LOW STOCK";
-  return "AVAILABLE";
-}
+export { consumableRowStatus } from "@/lib/inventory/row-status";

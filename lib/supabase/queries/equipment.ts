@@ -134,27 +134,4 @@ export async function getLastEquipmentActivity(
   };
 }
 
-export function equipmentRowStatus(
-  sku: Pick<
-    EquipmentSku,
-    | "available_units"
-    | "borrowed_units"
-    | "maintenance_units"
-    | "lost_units"
-    | "low_stock_threshold"
-  >,
-):
-  | "AVAILABLE"
-  | "LOW STOCK"
-  | "OUT"
-  | "MAINTENANCE"
-  | "LOST" {
-  if (sku.available_units === 0 && sku.borrowed_units === 0) {
-    if (sku.maintenance_units > 0) return "MAINTENANCE";
-    if (sku.lost_units > 0) return "LOST";
-    return "OUT";
-  }
-  if (sku.available_units === 0) return "OUT";
-  if (sku.available_units <= sku.low_stock_threshold) return "LOW STOCK";
-  return "AVAILABLE";
-}
+export { equipmentRowStatus } from "@/lib/inventory/row-status";
