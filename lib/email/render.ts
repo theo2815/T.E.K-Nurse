@@ -20,6 +20,8 @@ import * as ReturnDamaged from "./templates/return-damaged";
 import * as ReturnLost from "./templates/return-lost";
 import * as OverdueReminder from "./templates/overdue-reminder";
 import * as MarkedLost from "./templates/marked-lost";
+import * as StudentSuspended from "./templates/student-suspended";
+import * as StudentReinstated from "./templates/student-reinstated";
 
 type Resolved = {
   subject: string;
@@ -122,6 +124,16 @@ function resolve(p: EmailPayload): Resolved {
       return {
         subject: MarkedLost.subject(),
         jsx: MarkedLost.render(p.payload),
+      };
+    case "student_suspended":
+      return {
+        subject: StudentSuspended.subject(),
+        jsx: StudentSuspended.render(p.payload),
+      };
+    case "student_reinstated":
+      return {
+        subject: StudentReinstated.subject(),
+        jsx: StudentReinstated.render(p.payload),
       };
     default: {
       const _exhaustive: never = p;

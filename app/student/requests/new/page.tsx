@@ -3,11 +3,13 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getEquipmentSkuByQr } from "@/lib/supabase/queries/equipment";
 import { getConsumableSkuByQr } from "@/lib/supabase/queries/consumables";
+import { getMyPausedState } from "@/lib/supabase/queries/students";
 import { MonoId } from "@/components/ui/MonoId";
 import { StatusText, type Status } from "@/components/ui/StatusText";
 import { SpeedLines } from "@/components/SpeedLines";
 import { RequestForm } from "@/components/requests/RequestForm";
 import { ItemSummaryCard } from "@/components/requests/ItemSummaryCard";
+import { RequestPausedInterstitial } from "@/components/requests/RequestPausedInterstitial";
 
 type SP = { type?: string; sku?: string };
 
@@ -25,6 +27,8 @@ export default async function StudentNewRequestPage({
       type === "consumable" ? "/student/consumables" : "/student/equipment",
     );
   }
+
+  const paused = await getMyPausedState();
 
   if (type === "equipment") {
     const sku = await getEquipmentSkuByQr(decodeURIComponent(skuQr));
@@ -54,15 +58,23 @@ export default async function StudentNewRequestPage({
           />
         }
       >
-        <RequestForm
-          mode="equipment"
-          sku={{
-            qr_code: sku.qr_code,
-            name: sku.name,
-            available_units: sku.available_units,
-          }}
-          cancelHref={backHref}
-        />
+        {paused.paused ? (
+          <RequestPausedInterstitial
+            reason={paused.reason}
+            suspendedAt={paused.suspendedAt}
+            backHref={backHref}
+          />
+        ) : (
+          <RequestForm
+            mode="equipment"
+            sku={{
+              qr_code: sku.qr_code,
+              name: sku.name,
+              available_units: sku.available_units,
+            }}
+            cancelHref={backHref}
+          />
+        )}
       </Shell>
     );
   }
@@ -95,17 +107,25 @@ export default async function StudentNewRequestPage({
         />
       }
     >
-      <RequestForm
-        mode="consumable"
-        sku={{
-          qr_code: sku.qr_code,
-          name: sku.name,
-          unit: sku.unit,
-          per_request_max_quantity: sku.per_request_max_quantity,
-          total_remaining: sku.total_remaining,
-        }}
-        cancelHref={backHref}
-      />
+      {paused.paused ? (
+        <RequestPausedInterstitial
+          reason={paused.reason}
+          suspendedAt={paused.suspendedAt}
+          backHref={backHref}
+        />
+      ) : (
+        <RequestForm
+          mode="consumable"
+          sku={{
+            qr_code: sku.qr_code,
+            name: sku.name,
+            unit: sku.unit,
+            per_request_max_quantity: sku.per_request_max_quantity,
+            total_remaining: sku.total_remaining,
+          }}
+          cancelHref={backHref}
+        />
+      )}
     </Shell>
   );
 }

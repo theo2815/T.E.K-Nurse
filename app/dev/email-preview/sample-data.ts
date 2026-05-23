@@ -134,6 +134,19 @@ export const sampleData: Record<TemplateName, EmailPayload> = {
       transaction_id: "40000000-0000-0000-0000-000000000010",
     },
   },
+  student_suspended: {
+    template: "student_suspended",
+    payload: {
+      reason:
+        "Returned crash cart with missing pulse oximeter — awaiting replacement before lending resumes.",
+    },
+  },
+  student_reinstated: {
+    template: "student_reinstated",
+    payload: {
+      note: "Replacement oximeter received — thanks for the patience.",
+    },
+  },
 };
 
 export const templateGroups: Array<{ label: string; templates: TemplateName[] }> = [
@@ -167,5 +180,9 @@ export const templateGroups: Array<{ label: string; templates: TemplateName[] }>
   {
     label: "OVERDUE / LOST",
     templates: ["overdue_reminder", "marked_lost"],
+  },
+  {
+    label: "ACCOUNT",
+    templates: ["student_suspended", "student_reinstated"],
   },
 ];

@@ -35,6 +35,9 @@ async function assertStaff(): Promise<
 }
 
 function friendlyError(message: string): string {
+  if (/account is suspended/i.test(message)) {
+    return "Student account is suspended. Reinstate the student first if appropriate.";
+  }
   if (/overdue items/i.test(message)) {
     return "Student has overdue items and cannot borrow or use consumables until returned.";
   }
@@ -49,6 +52,24 @@ function friendlyError(message: string): string {
   }
   if (/decline_reason_required/i.test(message)) {
     return "A reason of at least 3 characters is required to decline.";
+  }
+  if (/cannot suspend your own account/i.test(message)) {
+    return "You cannot suspend your own account.";
+  }
+  if (/already suspended/i.test(message)) {
+    return "Student is already suspended.";
+  }
+  if (/already active/i.test(message)) {
+    return "Student is already active.";
+  }
+  if (/Only staff can suspend|Only staff can reinstate/i.test(message)) {
+    return "Staff only.";
+  }
+  if (/only applies to student accounts/i.test(message)) {
+    return "Only student accounts can be suspended or reinstated.";
+  }
+  if (/reason of at least 3 characters/i.test(message)) {
+    return "Please give a reason of at least 3 characters.";
   }
   return message;
 }
@@ -570,4 +591,79 @@ export async function overrideBorrow(input: {
   revalidatePath("/staff/requests");
   revalidatePath("/staff/home");
   return { ok: true, data: { transaction_id: data.id } };
+}
+
+// ─── Suspend / reinstate student ──────────────────────────────────────────
+//
+// Both call the suspend_student / reinstate_student SQL RPCs (0015). The
+// RPCs handle staff-only auth, the is_active flip, audit_log write, and
+// optional email + in-app notification — single transaction.
+
+const MIN_SUSPEND_REASON = 3;
+const MAX_SUSPEND_REASON = 500;
+
+export async function suspendStudent(input: {
+  student_id: string;
+  reason: string;
+  send_email: boolean;
+}): Promise<Result> {
+  const gate = await assertStaff();
+  if (!gate.ok) return { ok: false, error: gate.error };
+
+  const trimmed = input.reason.trim();
+  if (trimmed.length < MIN_SUSPEND_REASON) {
+    return {
+      ok: false,
+      error: `Please give a reason of at least ${MIN_SUSPEND_REASON} characters.`,
+    };
+  }
+  if (trimmed.length > MAX_SUSPEND_REASON) {
+    return {
+      ok: false,
+      error: `Reason is too long (${trimmed.length}/${MAX_SUSPEND_REASON} chars).`,
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("suspend_student", {
+    p_student_id: input.student_id,
+    p_reason: trimmed,
+    p_send_email: input.send_email,
+  });
+
+  if (error) return { ok: false, error: friendlyError(error.message) };
+
+  revalidatePath("/staff/students");
+  revalidatePath(`/staff/students/${input.student_id}`);
+  return { ok: true };
+}
+
+export async function reinstateStudent(input: {
+  student_id: string;
+  note: string;
+  send_email: boolean;
+}): Promise<Result> {
+  const gate = await assertStaff();
+  if (!gate.ok) return { ok: false, error: gate.error };
+
+  const trimmedNote = input.note.trim();
+  if (trimmedNote.length > MAX_SUSPEND_REASON) {
+    return {
+      ok: false,
+      error: `Note is too long (${trimmedNote.length}/${MAX_SUSPEND_REASON} chars).`,
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reinstate_student", {
+    p_student_id: input.student_id,
+    p_note: trimmedNote,
+    p_send_email: input.send_email,
+  });
+
+  if (error) return { ok: false, error: friendlyError(error.message) };
+
+  revalidatePath("/staff/students");
+  revalidatePath(`/staff/students/${input.student_id}`);
+  return { ok: true };
 }

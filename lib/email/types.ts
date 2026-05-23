@@ -183,6 +183,23 @@ export type MarkedLostPayload = {
   };
 };
 
+export type StudentSuspendedPayload = {
+  /** supabase/migrations/0015_student_suspension.sql — suspend_student RPC */
+  template: "student_suspended";
+  payload: {
+    reason: string;
+  };
+};
+
+export type StudentReinstatedPayload = {
+  /** supabase/migrations/0015_student_suspension.sql — reinstate_student RPC */
+  template: "student_reinstated";
+  payload: {
+    /** Optional staff note. Empty string when none provided. */
+    note: string;
+  };
+};
+
 export type EmailPayload =
   | BorrowApprovedWithCodePayload
   | BorrowPickedUpPayload
@@ -201,7 +218,9 @@ export type EmailPayload =
   | ReturnDamagedPayload
   | ReturnLostPayload
   | OverdueReminderPayload
-  | MarkedLostPayload;
+  | MarkedLostPayload
+  | StudentSuspendedPayload
+  | StudentReinstatedPayload;
 
 export type TemplateName = EmailPayload["template"];
 

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export type SkuSearchRow = {
   type: "equipment" | "consumable";
+  id: string;
   qr_code: string;
   name: string;
   photo_url: string | null;
@@ -30,13 +31,13 @@ export async function searchSkus(rawQuery: string): Promise<SkuSearchRow[]> {
   const [eqRes, cnRes] = await Promise.all([
     supabase
       .from("equipment_sku")
-      .select("qr_code, name, photo_url, location")
+      .select("id, qr_code, name, photo_url, location")
       .or(`name.ilike.${pattern},qr_code.ilike.${pattern}`)
       .order("qr_code")
       .limit(EQ_LIMIT),
     supabase
       .from("consumable_sku")
-      .select("qr_code, name, photo_url, per_request_max_quantity, unit")
+      .select("id, qr_code, name, photo_url, per_request_max_quantity, unit")
       .or(`name.ilike.${pattern},qr_code.ilike.${pattern}`)
       .order("qr_code")
       .limit(CN_LIMIT),
@@ -47,6 +48,7 @@ export async function searchSkus(rawQuery: string): Promise<SkuSearchRow[]> {
 
   const eq: SkuSearchRow[] = (eqRes.data ?? []).map((r) => ({
     type: "equipment",
+    id: r.id as string,
     qr_code: r.qr_code as string,
     name: r.name as string,
     photo_url: (r.photo_url as string | null) ?? null,
@@ -55,6 +57,7 @@ export async function searchSkus(rawQuery: string): Promise<SkuSearchRow[]> {
 
   const cn: SkuSearchRow[] = (cnRes.data ?? []).map((r) => ({
     type: "consumable",
+    id: r.id as string,
     qr_code: r.qr_code as string,
     name: r.name as string,
     photo_url: (r.photo_url as string | null) ?? null,
