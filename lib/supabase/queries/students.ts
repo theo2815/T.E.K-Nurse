@@ -270,7 +270,7 @@ export async function getStudentDetail(id: string): Promise<StudentDetail | null
 export type SuspensionHistoryEvent = {
   id: string;
   occurred_at: string;
-  action_type: "STUDENT_SUSPENDED" | "STUDENT_REINSTATED";
+  action_type: "student_suspended" | "student_reinstated";
   reason: string | null;
   actor_id: string | null;
   actor_name: string | null;
@@ -302,10 +302,10 @@ export async function getStudentSuspensionHistory(
   return ((data ?? []) as Row[])
     .filter(
       (r): r is Row & {
-        action_type: "STUDENT_SUSPENDED" | "STUDENT_REINSTATED";
+        action_type: "student_suspended" | "student_reinstated";
       } =>
-        r.action_type === "STUDENT_SUSPENDED" ||
-        r.action_type === "STUDENT_REINSTATED",
+        r.action_type === "student_suspended" ||
+        r.action_type === "student_reinstated",
     )
     .map((r) => ({
       id: r.id,

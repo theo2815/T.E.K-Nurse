@@ -10,6 +10,10 @@ import {
   searchSkus,
   type SkuSearchRow,
 } from "@/lib/supabase/queries/sku-search";
+import {
+  searchActors,
+  type AuditActorOption,
+} from "@/lib/supabase/queries/audit";
 
 type Result<T = void> = T extends void
   ? { ok: true } | { ok: false; error: string }
@@ -109,6 +113,20 @@ export async function searchSkusAction(
   if (!gate.ok) return { ok: false, error: gate.error };
   try {
     const data = await searchSkus(q);
+    return { ok: true, data };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Search failed.";
+    return { ok: false, error: msg };
+  }
+}
+
+export async function searchActorsAction(
+  q: string,
+): Promise<Result<AuditActorOption[]>> {
+  const gate = await assertStaff();
+  if (!gate.ok) return { ok: false, error: gate.error };
+  try {
+    const data = await searchActors(q);
     return { ok: true, data };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Search failed.";

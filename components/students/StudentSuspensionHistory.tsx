@@ -71,7 +71,7 @@ function EventRow({
   isFirst: boolean;
   isLast: boolean;
 }) {
-  const isSuspend = event.action_type === "STUDENT_SUSPENDED";
+  const isSuspend = event.action_type === "student_suspended";
   return (
     <li
       className={`flex gap-4 px-5 py-5 ${
