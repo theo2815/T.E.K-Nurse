@@ -108,8 +108,8 @@ export default function ForgotPasswordPage() {
           </p>
         )}
 
-        <Button type="submit" variant="primary" disabled={submitting}>
-          {submitting ? "Sending…" : "Send reset link"}
+        <Button type="submit" variant="primary" loading={submitting}>
+          Send reset link
         </Button>
       </form>
 

@@ -17,12 +17,13 @@ import type { Status } from "@/components/ui/StatusText";
 
 const TABS: Array<{ value: RequestTab; label: string }> = [
   { value: "pending", label: "Pending" },
+  { value: "approved", label: "Approved" },
   { value: "active", label: "Active" },
   { value: "past", label: "Past" },
 ];
 
 function parseTab(v: string | undefined): RequestTab {
-  if (v === "active" || v === "past") return v;
+  if (v === "approved" || v === "active" || v === "past") return v;
   return "pending";
 }
 
@@ -74,11 +75,32 @@ function pendingRowProps(r: MyRequestRow) {
     qr: r.sku.qr_code,
     status: "PENDING PICKUP" as Status,
     name: r.sku.name,
+    photoUrl: r.sku.photo_url,
     primaryMeta: `${formatPickup(r.borrow_date)}  ·  Qty ${r.quantity}${
       r.sku.unit ? ` ${r.sku.unit}` : ""
     }`,
     secondaryMeta: formatExpiresAt(r.expires_at),
     secondaryAlert: new Date(r.expires_at).getTime() <= Date.now(),
+  };
+}
+
+function approvedRowProps(r: MyRequestRow) {
+  // For APPROVED rows, the relevant deadline is the 24h pickup window
+  // (pickup_expires_at), not the original approve-by deadline (expires_at).
+  // Fall back to expires_at defensively if pickup_expires_at is missing.
+  const deadline = r.pickup_expires_at ?? r.expires_at;
+  return {
+    href: `/student/requests/${r.id}?type=${r.type}`,
+    type: r.type,
+    qr: r.sku.qr_code,
+    status: "APPROVED" as Status,
+    name: r.sku.name,
+    photoUrl: r.sku.photo_url,
+    primaryMeta: `${formatPickup(r.borrow_date)}  ·  Qty ${r.quantity}${
+      r.sku.unit ? ` ${r.sku.unit}` : ""
+    }`,
+    secondaryMeta: formatExpiresAt(deadline).replace(/^Expir/, "Pickup expir"),
+    secondaryAlert: new Date(deadline).getTime() <= Date.now(),
   };
 }
 
@@ -90,6 +112,7 @@ function pastRowProps(r: MyRequestRow) {
     qr: r.sku.qr_code,
     status: label as Status,
     name: r.sku.name,
+    photoUrl: r.sku.photo_url,
     primaryMeta: `${formatPickup(r.borrow_date)}  ·  Qty ${r.quantity}${
       r.sku.unit ? ` ${r.sku.unit}` : ""
     }`,
@@ -114,8 +137,14 @@ export default async function StudentRequestsPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Counts for all three tabs — lightweight head queries.
-  const [pendingEqCount, pendingCnCount, activeCount] = await Promise.all([
+  // Counts for the pending / approved / active tabs — lightweight head queries.
+  const [
+    pendingEqCount,
+    pendingCnCount,
+    approvedEqCount,
+    approvedCnCount,
+    activeCount,
+  ] = await Promise.all([
     supabase
       .from("borrow_request")
       .select("id", { count: "exact", head: true })
@@ -126,6 +155,16 @@ export default async function StudentRequestsPage({
       .select("id", { count: "exact", head: true })
       .eq("student_id", user.id)
       .eq("status", "PENDING_PICKUP"),
+    supabase
+      .from("borrow_request")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", user.id)
+      .eq("status", "APPROVED"),
+    supabase
+      .from("consumable_request")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", user.id)
+      .eq("status", "APPROVED"),
     supabase
       .from("borrow_transaction")
       .select("id", { count: "exact", head: true })
@@ -138,6 +177,8 @@ export default async function StudentRequestsPage({
     count:
       t.value === "pending"
         ? (pendingEqCount.count ?? 0) + (pendingCnCount.count ?? 0)
+        : t.value === "approved"
+        ? (approvedEqCount.count ?? 0) + (approvedCnCount.count ?? 0)
         : t.value === "active"
         ? (activeCount.count ?? 0)
         : undefined,
@@ -157,6 +198,7 @@ export default async function StudentRequestsPage({
       />
 
       {tab === "pending" && <PendingTab />}
+      {tab === "approved" && <ApprovedTab />}
       {tab === "active" && <ActiveTab />}
       {tab === "past" && <PastTab />}
     </div>
@@ -181,6 +223,29 @@ async function PendingTab() {
       <p className="mt-2 inline-flex items-center gap-2 text-[13px] text-slate italic">
         <Info size={14} strokeWidth={1.75} />
         Updates live as staff approves at the counter.
+      </p>
+    </div>
+  );
+}
+
+async function ApprovedTab() {
+  const rows = await listMyRequests({ scope: "approved" });
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        title="Nothing approved yet"
+        hint="When staff approves a request, it shows here with the pickup code window."
+      />
+    );
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      {rows.map((r) => (
+        <RequestCard key={`${r.type}:${r.id}`} {...approvedRowProps(r)} />
+      ))}
+      <p className="mt-2 inline-flex items-center gap-2 text-[13px] text-slate italic">
+        <Info size={14} strokeWidth={1.75} />
+        Tap a card to see its pickup code. Codes expire 24h after approval.
       </p>
     </div>
   );
@@ -227,6 +292,7 @@ async function ActiveTab() {
             qr={r.sku.qr_code}
             status={overdue ? ("OVERDUE" as Status) : ("BORROWED" as Status)}
             name={r.sku.name}
+            photoUrl={r.sku.photo_url}
             primaryMeta={`Borrowed ${new Date(
               r.borrowed_at,
             ).toLocaleDateString("en-US", {

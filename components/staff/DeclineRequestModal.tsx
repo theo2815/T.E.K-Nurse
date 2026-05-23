@@ -1,9 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/lib/use-progress-router";
 import { useEffect, useState, useTransition } from "react";
 import { AlertTriangle, X as XIcon } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import {
   declineBorrowRequest,
   declineConsumableRequest,
@@ -30,7 +31,7 @@ export function DeclineRequestModal({
   sku,
   student_name,
 }: Props) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -85,15 +86,17 @@ export function DeclineRequestModal({
           >
             Cancel
           </button>
-          <button
+          <Button
             type="button"
+            variant="danger"
             onClick={handleConfirm}
             disabled={!canSubmit}
-            className="inline-flex items-center justify-center gap-2 bg-red-deep text-white font-mono uppercase text-[15px] tracking-[0.12em] font-bold px-6 py-3.5 rounded transition-colors hover:bg-red active:bg-navy-deep disabled:opacity-40 disabled:pointer-events-none"
+            loading={pending}
+            className="!py-3.5"
           >
-            <XIcon size={18} strokeWidth={2} />
-            {pending ? "Working…" : "Decline request"}
-          </button>
+            {!pending && <XIcon size={18} strokeWidth={2} />}
+            Decline request
+          </Button>
         </div>
       }
     >

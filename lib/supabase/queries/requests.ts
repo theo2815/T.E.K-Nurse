@@ -97,10 +97,14 @@ type ConsumableRow = {
   };
 };
 
-// PENDING tab now includes APPROVED — the student has a pickup code and an
-// open task (go to the lab). RELEASED is the moment the item is in hand and
-// the request lifecycle is complete; it lives in PAST alongside terminations.
-const PENDING_STATUSES: RequestStatus[] = ["PENDING_PICKUP", "APPROVED"];
+// Three terminal-ish buckets visible to the student:
+// - PENDING: still waiting on staff to approve/decline.
+// - APPROVED: staff said yes; student has a live pickup code (24h window) and
+//   needs to walk to the counter. Surfaced in its own tab so it doesn't get
+//   lost alongside still-waiting requests.
+// - PAST: lifecycle complete (released to student, or terminated).
+const PENDING_STATUSES: RequestStatus[] = ["PENDING_PICKUP"];
+const APPROVED_STATUSES: RequestStatus[] = ["APPROVED"];
 const PAST_STATUSES: RequestStatus[] = [
   "RELEASED",
   "EXPIRED",
@@ -170,7 +174,7 @@ function mapConsumable(r: ConsumableRow): MyRequestRow {
 }
 
 export async function listMyRequests(opts: {
-  scope: "pending" | "past";
+  scope: "pending" | "approved" | "past";
 }): Promise<MyRequestRow[]> {
   const supabase = await createClient();
   const {
@@ -179,7 +183,11 @@ export async function listMyRequests(opts: {
   if (!user) return [];
 
   const statuses =
-    opts.scope === "pending" ? PENDING_STATUSES : PAST_STATUSES;
+    opts.scope === "pending"
+      ? PENDING_STATUSES
+      : opts.scope === "approved"
+      ? APPROVED_STATUSES
+      : PAST_STATUSES;
 
   const [eqRes, cnRes] = await Promise.all([
     supabase

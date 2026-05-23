@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/lib/use-progress-router";
 import { useEffect, useState, useTransition } from "react";
 import {
   ArrowRight,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 import {
   releaseBorrowRequest,
@@ -33,6 +34,9 @@ export type ReleaseSuccessActivity = {
 type Props = {
   open: boolean;
   onClose: () => void;
+  /** When provided, renders the modal's chevron-left affordance — used when
+   *  this modal was opened from the multi-student PickupVerifyPicker. */
+  onBack?: () => void;
   request: StaffPendingRequestRow;
   onSuccess?: (activity: ReleaseSuccessActivity) => void;
 };
@@ -40,10 +44,11 @@ type Props = {
 export function VerifyAtPickupModal({
   open,
   onClose,
+  onBack,
   request,
   onSuccess,
 }: Props) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -97,6 +102,7 @@ export function VerifyAtPickupModal({
     <Modal
       open={open}
       onClose={onClose}
+      onBack={onBack}
       eyebrow="PICKUP · VERIFY"
       title={request.student.full_name}
       size="wide"
@@ -109,19 +115,16 @@ export function VerifyAtPickupModal({
           >
             Cancel
           </button>
-          <button
+          <Button
             type="button"
             onClick={handleConfirm}
-            disabled={pending || !code}
-            className="inline-flex items-center justify-center gap-2 bg-teal text-white font-mono uppercase text-[15px] tracking-[0.12em] font-bold px-7 py-4 rounded whitespace-nowrap transition-colors hover:bg-teal-deep active:bg-navy-deep disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!code}
+            loading={pending}
+            className="!px-7 whitespace-nowrap"
           >
-            {pending
-              ? "Releasing…"
-              : variant === "equipment"
-                ? "Release item"
-                : "Issue units"}
-            {!pending && <ArrowRight size={18} strokeWidth={2} />}
-          </button>
+            {variant === "equipment" ? "Release item" : "Issue units"}
+            <ArrowRight size={18} strokeWidth={2} />
+          </Button>
         </div>
       }
     >

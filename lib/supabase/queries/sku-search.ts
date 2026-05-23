@@ -4,6 +4,7 @@ export type SkuSearchRow = {
   type: "equipment" | "consumable";
   qr_code: string;
   name: string;
+  photo_url: string | null;
   /** Equipment: location · Consumable: per_request_max_quantity caption */
   caption: string | null;
 };
@@ -29,13 +30,13 @@ export async function searchSkus(rawQuery: string): Promise<SkuSearchRow[]> {
   const [eqRes, cnRes] = await Promise.all([
     supabase
       .from("equipment_sku")
-      .select("qr_code, name, location")
+      .select("qr_code, name, photo_url, location")
       .or(`name.ilike.${pattern},qr_code.ilike.${pattern}`)
       .order("qr_code")
       .limit(EQ_LIMIT),
     supabase
       .from("consumable_sku")
-      .select("qr_code, name, per_request_max_quantity, unit")
+      .select("qr_code, name, photo_url, per_request_max_quantity, unit")
       .or(`name.ilike.${pattern},qr_code.ilike.${pattern}`)
       .order("qr_code")
       .limit(CN_LIMIT),
@@ -48,6 +49,7 @@ export async function searchSkus(rawQuery: string): Promise<SkuSearchRow[]> {
     type: "equipment",
     qr_code: r.qr_code as string,
     name: r.name as string,
+    photo_url: (r.photo_url as string | null) ?? null,
     caption: (r.location as string | null) ?? null,
   }));
 
@@ -55,6 +57,7 @@ export async function searchSkus(rawQuery: string): Promise<SkuSearchRow[]> {
     type: "consumable",
     qr_code: r.qr_code as string,
     name: r.name as string,
+    photo_url: (r.photo_url as string | null) ?? null,
     caption: `Max ${r.per_request_max_quantity} ${r.unit} per request`,
   }));
 

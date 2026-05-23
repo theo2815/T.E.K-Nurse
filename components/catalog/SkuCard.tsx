@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { MonoId } from "@/components/ui/MonoId";
 import { StatusText, type Status } from "@/components/ui/StatusText";
@@ -18,6 +20,8 @@ export function SkuCard({
   countLabel,
   countTone = "ok",
   photoUrl,
+  selected,
+  onToggle,
 }: {
   href: string;
   qr: string;
@@ -29,6 +33,9 @@ export function SkuCard({
   countLabel?: string;
   countTone?: Tone;
   photoUrl?: string | null;
+  /** When defined, the card becomes selectable. Toggles override link nav. */
+  onToggle?: () => void;
+  selected?: boolean;
 }) {
   const isAlert = status === "OVERDUE" || status === "LOST";
   const countColor =
@@ -38,13 +45,39 @@ export function SkuCard({
       ? "text-slate"
       : "text-navy";
 
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggle?.();
+  };
+
+  const selectedClass = selected
+    ? "ring-[1.5px] ring-teal bg-teal/5"
+    : "";
+
   return (
     <Link
       href={href}
       className="group block focus:outline-none focus-visible:[&>*]:border-teal"
     >
-      <Card variant={isAlert ? "alert" : "default"} className="cursor-pointer">
+      <Card variant={isAlert ? "alert" : "default"} className={`cursor-pointer ${selectedClass}`}>
         <div className="flex gap-4">
+          {onToggle && (
+            <button
+              type="button"
+              onClick={handleCheckboxClick}
+              aria-pressed={!!selected}
+              aria-label={selected ? `Deselect ${name}` : `Select ${name}`}
+              className={`shrink-0 size-6 mt-1 rounded border-[1.5px] flex items-center justify-center transition-colors ${
+                selected
+                  ? "bg-teal border-teal text-white hover:bg-teal-deep hover:border-teal-deep"
+                  : "bg-paper border-rule hover:border-teal"
+              }`}
+            >
+              {selected && <Check size={14} strokeWidth={3} />}
+            </button>
+          )}
+
           <PhotoFrame
             src={photoUrl}
             alt={name}

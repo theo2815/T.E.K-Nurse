@@ -35,6 +35,7 @@ export default async function StudentEquipmentPage({
   const sp = await searchParams;
   const filter = parseFilter(sp.filter);
   const search = sp.q ?? "";
+  const isFiltered = filter !== "ALL" || search.length > 0;
 
   const [skus, summary] = await Promise.all([
     listEquipmentSkus({ filter, search }),
@@ -49,7 +50,11 @@ export default async function StudentEquipmentPage({
         overview={`${summary.total} units · ${summary.available} available · ${summary.borrowed} out`}
       />
       <CatalogControls chips={FILTER_CHIPS} defaultFilter="ALL" />
-      <EquipmentList skus={skus} detailHrefBase="/student/equipment" />
+      <EquipmentList
+        skus={skus}
+        detailHrefBase="/student/equipment"
+        isFiltered={isFiltered}
+      />
     </div>
   );
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/lib/use-progress-router";
 import { useState, useTransition } from "react";
 import { AlertTriangle, ArrowRight } from "lucide-react";
 import {
   submitEquipmentRequest,
   submitConsumableRequest,
 } from "@/app/student/requests/actions";
+import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 
@@ -65,7 +66,7 @@ type Props = (EquipmentMode | ConsumableMode) & {
 };
 
 export function RequestForm(props: Props) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -219,14 +220,10 @@ export function RequestForm(props: Props) {
         >
           Cancel
         </a>
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="inline-flex items-center justify-center gap-2 bg-teal text-white font-mono uppercase text-[15px] tracking-[0.12em] font-bold px-6 py-4 rounded transition-colors hover:bg-teal-deep active:bg-navy-deep disabled:opacity-40 disabled:pointer-events-none"
-        >
-          {pending ? "Submitting…" : "Submit request"}
+        <Button type="submit" variant="primary" disabled={!canSubmit} loading={pending}>
+          Submit request
           <ArrowRight size={18} strokeWidth={2} />
-        </button>
+        </Button>
       </div>
     </form>
   );

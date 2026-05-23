@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ChevronRight, Package, Beaker } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { MonoId } from "@/components/ui/MonoId";
+import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 
 export type StaffRequestCardProps = {
   href: string;
@@ -11,6 +12,7 @@ export type StaffRequestCardProps = {
   /** e.g. year_section "4 CS-A" (optional). */
   studentDetail?: string | null;
   itemName: string;
+  itemPhotoUrl?: string | null;
   /** e.g. "Pickup today · Qty 1 unit". */
   itemMeta: string;
   /** ISO timestamp of created_at — drives the WAITING chip. */
@@ -62,11 +64,11 @@ function formatExpiry(iso: string, nowMs: number): {
 
 export function StaffRequestCard({
   href,
-  type,
   qr,
   studentName,
   studentDetail,
   itemName,
+  itemPhotoUrl,
   itemMeta,
   createdAt,
   expiresAt,
@@ -74,7 +76,6 @@ export function StaffRequestCard({
   const now = Date.now();
   const wait = formatWait(createdAt, now);
   const expiry = formatExpiry(expiresAt, now);
-  const TypeIcon = type === "equipment" ? Package : Beaker;
 
   return (
     <Link
@@ -129,9 +130,12 @@ export function StaffRequestCard({
 
           {/* Item row */}
           <div className="flex items-center gap-3 pt-1 border-t border-rule/60">
-            <div className="shrink-0 size-10 rounded border-[1.5px] border-rule flex items-center justify-center text-slate group-hover:text-teal group-hover:border-teal transition-colors">
-              <TypeIcon size={20} strokeWidth={1.75} />
-            </div>
+            <PhotoFrame
+              src={itemPhotoUrl}
+              alt={itemName}
+              size="thumb"
+              className="shrink-0"
+            />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-navy text-[15px] leading-tight line-clamp-1">
                 {itemName}

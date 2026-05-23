@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/lib/use-progress-router";
 import { useEffect, useState, useTransition } from "react";
 import {
   AlertTriangle,
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 import { logReturn, type ReturnCondition } from "@/app/staff/actions";
 import type { OpenBorrowRow } from "@/lib/supabase/queries/staff-requests";
@@ -28,6 +29,9 @@ export type ReturnSuccessActivity = {
 type Props = {
   open: boolean;
   onClose: () => void;
+  /** When provided, renders the modal's chevron-left back affordance — used
+   *  when this modal was opened from the equipment ActionPicker. */
+  onBack?: () => void;
   sku: { qr_code: string; name: string; photo_url: string | null };
   openBorrows: OpenBorrowRow[];
   onSuccess?: (activity: ReturnSuccessActivity) => void;
@@ -95,11 +99,12 @@ function formatDue(iso: string): {
 export function ReturnModal({
   open,
   onClose,
+  onBack,
   sku,
   openBorrows,
   onSuccess,
 }: Props) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -118,13 +123,12 @@ export function ReturnModal({
   const selected = openBorrows.find((b) => b.id === selectedId) ?? null;
   const canSubmit = !pending && !!selected;
   const isLost = condition === "LOST_ON_RETURN";
-  const confirmLabel = pending
-    ? "Working…"
-    : condition === "DAMAGED"
-    ? "Confirm return · damaged"
-    : isLost
-    ? "Mark as lost"
-    : "Confirm return";
+  const confirmLabel =
+    condition === "DAMAGED"
+      ? "Confirm return · damaged"
+      : isLost
+      ? "Mark as lost"
+      : "Confirm return";
 
   function handleConfirm() {
     if (!canSubmit || !selected) return;
@@ -178,6 +182,7 @@ export function ReturnModal({
     <Modal
       open={open}
       onClose={onClose}
+      onBack={onBack}
       eyebrow="LOG RETURN"
       title={`Return ${sku.qr_code}`}
       status={pending ? "WORKING" : "READY"}
@@ -191,20 +196,17 @@ export function ReturnModal({
           >
             Cancel
           </button>
-          <button
+          <Button
             type="button"
+            variant={isLost ? "danger" : "primary"}
             onClick={handleConfirm}
             disabled={!canSubmit}
-            className={[
-              "inline-flex items-center justify-center gap-2 text-white font-mono uppercase text-[15px] tracking-[0.12em] font-bold px-6 py-3.5 rounded transition-colors disabled:opacity-40 disabled:pointer-events-none",
-              isLost
-                ? "bg-red-deep hover:bg-red active:bg-navy-deep"
-                : "bg-teal hover:bg-teal-deep active:bg-navy-deep",
-            ].join(" ")}
+            loading={pending}
+            className="!py-3.5"
           >
             {confirmLabel}
             <ArrowRight size={18} strokeWidth={2} />
-          </button>
+          </Button>
         </div>
       }
     >

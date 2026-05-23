@@ -9,6 +9,7 @@ import {
 import { MonoId } from "@/components/ui/MonoId";
 import { StatusText, type Status } from "@/components/ui/StatusText";
 import { SpeedLines } from "@/components/SpeedLines";
+import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 import { CancelButton } from "@/components/requests/CancelButton";
 import { PickupCodeCard } from "@/components/student/PickupCodeCard";
 
@@ -80,29 +81,34 @@ export default async function StudentRequestDetailPage({
             Back to requests
           </Link>
 
-          <div className="mt-6 flex items-center gap-3">
-            <SpeedLines className="w-12 h-5" />
-            <p className="font-mono uppercase text-caps-sm text-teal font-semibold">
-              {eyebrow} · #{shortId}
-            </p>
-          </div>
+          <header className="mt-6 grid gap-8 md:grid-cols-[1fr_minmax(0,_280px)] md:items-start">
+            <div>
+              <div className="flex items-center gap-3">
+                <SpeedLines className="w-12 h-5" />
+                <p className="font-mono uppercase text-caps-sm text-teal font-semibold">
+                  {eyebrow} · #{shortId}
+                </p>
+              </div>
 
-          <div className="mt-1 flex items-baseline justify-between gap-3 flex-wrap">
-            <MonoId id={req.sku.qr_code} />
-            <StatusText
-              status={statusLabel}
-              emphatic={req.status === "PENDING_PICKUP" || req.status === "APPROVED"}
-            />
-          </div>
+              <div className="mt-1 flex items-baseline justify-between gap-3 flex-wrap">
+                <MonoId id={req.sku.qr_code} />
+                <StatusText
+                  status={statusLabel}
+                  emphatic={req.status === "PENDING_PICKUP" || req.status === "APPROVED"}
+                />
+              </div>
 
-          <h1 className="mt-3 font-display italic font-extrabold text-display md:text-[48px] text-navy leading-tight">
-            {req.sku.name}
-          </h1>
-          {req.sku.description && (
-            <p className="mt-3 text-[17px] text-slate max-w-2xl leading-relaxed">
-              {req.sku.description}
-            </p>
-          )}
+              <h1 className="mt-3 font-display italic font-extrabold text-display md:text-[48px] text-navy leading-tight">
+                {req.sku.name}
+              </h1>
+              {req.sku.description && (
+                <p className="mt-3 text-[17px] text-slate max-w-2xl leading-relaxed">
+                  {req.sku.description}
+                </p>
+              )}
+            </div>
+            <PhotoFrame src={req.sku.photo_url} alt={req.sku.name} />
+          </header>
         </div>
 
         <div className="grid gap-8 md:grid-cols-[200px_1fr] md:items-baseline">

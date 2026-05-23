@@ -202,8 +202,8 @@ export default function SignupPage() {
           </p>
         )}
 
-        <Button type="submit" variant="primary" disabled={!canSubmit}>
-          {submitting ? "Creating…" : "Create account"}
+        <Button type="submit" variant="primary" disabled={!canSubmit} loading={submitting}>
+          Create account
         </Button>
       </form>
 

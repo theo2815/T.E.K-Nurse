@@ -1,10 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/lib/use-progress-router";
 import { useEffect, useState, useTransition } from "react";
 import { AlertTriangle, ArrowRight, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { QtyStepper } from "@/components/ui/QtyStepper";
 import { PhotoFrame } from "@/components/catalog/PhotoFrame";
@@ -89,10 +90,13 @@ type ApproveProps = {
 type Props = (WalkInProps | ApproveProps) & {
   open: boolean;
   onClose: () => void;
+  /** When provided, renders the modal's chevron-left back affordance — used
+   *  when this modal was opened from the equipment ActionPicker. */
+  onBack?: () => void;
 };
 
 export function LendModal(props: Props) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -223,6 +227,7 @@ export function LendModal(props: Props) {
     <Modal
       open={props.open}
       onClose={props.onClose}
+      onBack={props.onBack}
       eyebrow={eyebrow}
       title={title}
       status={pending ? "WORKING" : "READY"}
@@ -235,19 +240,16 @@ export function LendModal(props: Props) {
           >
             Cancel
           </button>
-          <button
+          <Button
             type="button"
             onClick={handleConfirm}
             disabled={!canSubmit}
-            className="inline-flex items-center justify-center gap-2 bg-teal text-white font-mono uppercase text-[15px] tracking-[0.12em] font-bold px-6 py-3.5 rounded transition-colors hover:bg-teal-deep active:bg-navy-deep disabled:opacity-40 disabled:pointer-events-none"
+            loading={pending}
+            className="!py-3.5"
           >
-            {pending
-              ? "Working…"
-              : isApprove
-              ? "Confirm pickup"
-              : "Confirm lend"}
+            {isApprove ? "Confirm pickup" : "Confirm lend"}
             <ArrowRight size={18} strokeWidth={2} />
-          </button>
+          </Button>
         </div>
       }
     >

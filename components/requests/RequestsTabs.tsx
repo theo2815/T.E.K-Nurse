@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export type RequestTab = "pending" | "active" | "past";
+export type RequestTab = "pending" | "approved" | "active" | "past";
 
 type TabConfig<T extends string = string> = {
   value: T;

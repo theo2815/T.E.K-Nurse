@@ -30,7 +30,10 @@ export function ActionPicker({
 }: Props) {
   const { sku, openBorrows, awaitingPickup } = target;
   const showVerify = !!onPickVerify && awaitingPickup.length > 0;
-  const tileCount = (showVerify ? 1 : 0) + (target.canBorrow ? 1 : 0) + 1;
+  const showBorrow = target.canBorrow;
+  const showReturn = openBorrows.length > 0;
+  const tileCount =
+    (showVerify ? 1 : 0) + (showBorrow ? 1 : 0) + (showReturn ? 1 : 0);
   const gridCols =
     tileCount >= 3
       ? "sm:grid-cols-2 lg:grid-cols-3"
@@ -111,7 +114,7 @@ export function ActionPicker({
             </button>
           )}
 
-          {target.canBorrow && (
+          {showBorrow && (
             <button
               type="button"
               onClick={onPickBorrow}
@@ -142,34 +145,36 @@ export function ActionPicker({
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={onPickReturn}
-            className="group text-left rounded border-[1.5px] border-navy bg-paper hover:bg-navy/5 transition-colors px-5 py-5 flex flex-col gap-3"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-mono uppercase text-caps-sm font-bold tracking-[0.1em] text-navy">
-                Log return
-              </span>
-              <Undo2
-                size={16}
-                strokeWidth={2}
-                className="text-navy group-hover:-rotate-12 transition-transform"
-              />
-            </div>
-            <div>
-              <p className="font-display italic font-extrabold text-[44px] text-navy leading-none">
-                {openBorrows.length}
+          {showReturn && (
+            <button
+              type="button"
+              onClick={onPickReturn}
+              className="group text-left rounded border-[1.5px] border-navy bg-paper hover:bg-navy/5 transition-colors px-5 py-5 flex flex-col gap-3"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-mono uppercase text-caps-sm font-bold tracking-[0.1em] text-navy">
+                  Log return
+                </span>
+                <Undo2
+                  size={16}
+                  strokeWidth={2}
+                  className="text-navy group-hover:-rotate-12 transition-transform"
+                />
+              </div>
+              <div>
+                <p className="font-display italic font-extrabold text-[44px] text-navy leading-none">
+                  {openBorrows.length}
+                </p>
+                <p className="mt-1 font-mono uppercase text-caps-sm text-slate tracking-[0.08em]">
+                  {openBorrows.length === 1 ? "borrow" : "borrows"} out
+                </p>
+              </div>
+              <p className="text-[13.5px] text-slate leading-snug">
+                A student is returning this item. Closes the open borrow on
+                their account.
               </p>
-              <p className="mt-1 font-mono uppercase text-caps-sm text-slate tracking-[0.08em]">
-                {openBorrows.length === 1 ? "borrow" : "borrows"} out
-              </p>
-            </div>
-            <p className="text-[13.5px] text-slate leading-snug">
-              A student is returning this item. Closes the open borrow on their
-              account.
-            </p>
-          </button>
+            </button>
+          )}
         </div>
 
         {/* Optional context — units actually on the shelf */}

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Montserrat, Manrope, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { RouteProgress } from "@/components/ui/RouteProgress";
+import { InteractionLock } from "@/components/ui/InteractionLock";
 import "./globals.css";
 
 const display = Montserrat({
@@ -40,6 +42,8 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         {children}
+        <RouteProgress />
+        <InteractionLock />
         <Toaster
           position="top-center"
           richColors

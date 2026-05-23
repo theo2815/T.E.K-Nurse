@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ChevronRight, Calendar, Package, Beaker } from "lucide-react";
+import { ChevronRight, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { MonoId } from "@/components/ui/MonoId";
 import { StatusText, type Status } from "@/components/ui/StatusText";
+import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 
 export type RequestCardProps = {
   href: string;
@@ -10,6 +11,7 @@ export type RequestCardProps = {
   qr: string;
   status: Status;
   name: string;
+  photoUrl?: string | null;
   /** First detail line (e.g. "Pickup today · Qty 1"). */
   primaryMeta: string;
   /** Second detail line (e.g. "Expires tomorrow 11:59 PM" or "Due Fri · 3 days left"). */
@@ -20,16 +22,15 @@ export type RequestCardProps = {
 
 export function RequestCard({
   href,
-  type,
   qr,
   status,
   name,
+  photoUrl,
   primaryMeta,
   secondaryMeta,
   secondaryAlert,
 }: RequestCardProps) {
   const isAlert = status === "OVERDUE" || status === "LOST";
-  const TypeIcon = type === "equipment" ? Package : Beaker;
 
   return (
     <Link
@@ -38,9 +39,12 @@ export function RequestCard({
     >
       <Card variant={isAlert ? "alert" : "default"} className="cursor-pointer">
         <div className="flex items-start gap-4">
-          <div className="shrink-0 size-12 rounded border-[1.5px] border-rule flex items-center justify-center text-slate group-hover:text-teal group-hover:border-teal transition-colors">
-            <TypeIcon size={22} strokeWidth={1.75} />
-          </div>
+          <PhotoFrame
+            src={photoUrl}
+            alt={name}
+            size="thumb"
+            className="shrink-0"
+          />
 
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline justify-between gap-3">

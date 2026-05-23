@@ -1,10 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/lib/use-progress-router";
 import { useState, useTransition } from "react";
 import { AlertTriangle, X as XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import {
   expireBorrowRequest,
   expireConsumableRequest,
@@ -31,7 +32,7 @@ export function CancelReservationAction({
   student_name,
   sku,
 }: Props) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -83,14 +84,15 @@ export function CancelReservationAction({
             >
               Keep reservation
             </button>
-            <button
+            <Button
               type="button"
+              variant="danger"
               onClick={handleConfirm}
-              disabled={pending}
-              className="inline-flex items-center justify-center gap-2 bg-red-deep text-white font-mono uppercase text-[15px] tracking-[0.12em] font-bold px-7 py-4 rounded whitespace-nowrap transition-colors hover:bg-red-deep/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              loading={pending}
+              className="!px-7 whitespace-nowrap"
             >
-              {pending ? "Cancelling…" : "Cancel reservation"}
-            </button>
+              Cancel reservation
+            </Button>
           </div>
         }
       >

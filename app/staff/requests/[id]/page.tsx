@@ -20,6 +20,7 @@ import { getConsumableSkuByQr } from "@/lib/supabase/queries/consumables";
 import { MonoId } from "@/components/ui/MonoId";
 import { StatusText, type Status } from "@/components/ui/StatusText";
 import { SpeedLines } from "@/components/SpeedLines";
+import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 import { ApproveRequestAction } from "@/components/staff/ApproveRequestAction";
 import { DeclineRequestAction } from "@/components/staff/DeclineRequestAction";
 import { VerifyAtPickupAction } from "@/components/staff/VerifyAtPickupAction";
@@ -219,9 +220,12 @@ export default async function StaffRequestDetailPage({
             Requested item
           </p>
           <div className="flex items-center gap-4">
-            <div className="shrink-0 size-14 rounded border-[1.5px] border-rule flex items-center justify-center text-teal">
-              <TypeIcon size={26} strokeWidth={1.75} />
-            </div>
+            <PhotoFrame
+              src={req.sku.photo_url}
+              alt={req.sku.name}
+              size="thumb"
+              className="shrink-0"
+            />
             <div>
               <h2 className="font-display italic font-extrabold text-[26px] text-navy leading-tight">
                 {req.sku.name}

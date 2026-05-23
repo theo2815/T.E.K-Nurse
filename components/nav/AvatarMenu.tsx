@@ -1,9 +1,34 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { useProgressRouter } from "@/lib/use-progress-router";
+import {
+  BarChart3,
+  LogOut,
+  ScrollText,
+  Settings,
+  UserCircle2,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+
+type NavLink = {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  /** When true, hidden on md+ — the desktop sidebar already exposes these. */
+  mobileOnly?: boolean;
+};
+
+const NAV_LINKS: NavLink[] = [
+  { label: "Reports", href: "/staff/reports", icon: BarChart3, mobileOnly: true },
+  { label: "Students", href: "/staff/students", icon: Users, mobileOnly: true },
+  { label: "Audit log", href: "/staff/audit-log", icon: ScrollText, mobileOnly: true },
+  { label: "Profile", href: "/staff/profile", icon: UserCircle2 },
+  { label: "Settings", href: "/staff/settings", icon: Settings },
+];
 
 export function AvatarMenu({
   initials,
@@ -17,7 +42,7 @@ export function AvatarMenu({
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  const router = useProgressRouter();
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -36,6 +61,9 @@ export function AvatarMenu({
     router.replace("/login");
     router.refresh();
   }
+
+  const rowClass =
+    "w-full flex items-center gap-2.5 text-left text-navy text-[15px] font-medium py-2.5 hover:underline underline-offset-4 decoration-teal decoration-2";
 
   return (
     <div ref={ref} className="relative">
@@ -61,12 +89,35 @@ export function AvatarMenu({
           <p className="font-mono text-[13px] text-slate truncate mt-1">
             {email}
           </p>
+
           <hr className="my-4" />
+
+          <nav className="flex flex-col">
+            {NAV_LINKS.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className={`${rowClass} ${link.mobileOnly ? "md:hidden" : ""}`}
+                >
+                  <Icon size={16} strokeWidth={1.5} />
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <hr className="my-4" />
+
           <button
             type="button"
+            role="menuitem"
             onClick={signOut}
             disabled={signingOut}
-            className="w-full flex items-center gap-2.5 text-left text-navy text-[15px] font-medium py-2 disabled:opacity-50 hover:underline underline-offset-4 decoration-teal decoration-2"
+            className={`${rowClass} disabled:opacity-50`}
           >
             <LogOut size={16} strokeWidth={1.5} />
             {signingOut ? "Signing out…" : "Sign out"}

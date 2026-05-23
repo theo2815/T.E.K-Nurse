@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ChevronRight, Package, Beaker, CheckCircle2 } from "lucide-react";
+import { ChevronRight, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { MonoId } from "@/components/ui/MonoId";
+import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 import type { StaffPendingRequestRow } from "@/lib/supabase/queries/staff-requests";
 
 type Props = {
@@ -53,7 +54,6 @@ function formatCode(code: string | null): string {
 export function StaffAwaitingPickupCard({ request: r }: Props) {
   const now = Date.now();
   const expiry = formatExpiry(r.pickup_expires_at, now);
-  const TypeIcon = r.type === "equipment" ? Package : Beaker;
   const unitLabel = r.sku.unit ?? (r.quantity === 1 ? "unit" : "units");
   const href = `/staff/requests/${r.id}?type=${r.type}`;
 
@@ -112,9 +112,12 @@ export function StaffAwaitingPickupCard({ request: r }: Props) {
 
           {/* Item row */}
           <div className="flex items-center gap-3 pt-1 border-t border-rule/60">
-            <div className="shrink-0 size-10 rounded border-[1.5px] border-rule flex items-center justify-center text-slate group-hover:text-teal group-hover:border-teal transition-colors">
-              <TypeIcon size={20} strokeWidth={1.75} />
-            </div>
+            <PhotoFrame
+              src={r.sku.photo_url}
+              alt={r.sku.name}
+              size="thumb"
+              className="shrink-0"
+            />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-navy text-[15px] leading-tight line-clamp-1">
                 {r.sku.name}

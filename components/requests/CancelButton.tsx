@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/lib/use-progress-router";
 import { AlertTriangle, X } from "lucide-react";
 import { cancelRequest } from "@/app/student/requests/actions";
+import { Button } from "@/components/ui/Button";
 
 export function CancelButton({
   id,
@@ -12,7 +13,7 @@ export function CancelButton({
   id: string;
   type: "equipment" | "consumable";
 }) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -77,14 +78,14 @@ export function CancelButton({
         >
           Keep request
         </button>
-        <button
+        <Button
           type="button"
+          variant="danger"
           onClick={handleConfirm}
-          disabled={pending}
-          className="inline-flex items-center justify-center gap-2 bg-red-deep text-white font-mono uppercase text-[15px] tracking-[0.12em] font-bold px-6 py-4 rounded transition-colors hover:opacity-90 disabled:opacity-40 disabled:pointer-events-none"
+          loading={pending}
         >
-          {pending ? "Cancelling…" : "Yes, cancel"}
-        </button>
+          Yes, cancel
+        </Button>
       </div>
     </div>
   );

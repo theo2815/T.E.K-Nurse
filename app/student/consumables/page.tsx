@@ -35,6 +35,7 @@ export default async function StudentConsumablesPage({
   const sp = await searchParams;
   const filter = parseFilter(sp.filter);
   const search = sp.q ?? "";
+  const isFiltered = filter !== "ALL" || search.length > 0;
 
   const [skus, summary] = await Promise.all([
     listConsumableSkus({ filter, search }),
@@ -49,7 +50,11 @@ export default async function StudentConsumablesPage({
         overview={`${summary.sku_count} supplies · ${summary.in_stock_count} in stock · ${summary.low_stock_count} low`}
       />
       <CatalogControls chips={FILTER_CHIPS} defaultFilter="ALL" />
-      <ConsumableList skus={skus} detailHrefBase="/student/consumables" />
+      <ConsumableList
+        skus={skus}
+        detailHrefBase="/student/consumables"
+        isFiltered={isFiltered}
+      />
     </div>
   );
 }

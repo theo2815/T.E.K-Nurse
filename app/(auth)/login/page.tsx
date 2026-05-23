@@ -2,7 +2,8 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useProgressRouter } from "@/lib/use-progress-router";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { SpeedLines } from "@/components/SpeedLines";
@@ -25,7 +26,7 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
-  const router = useRouter();
+  const router = useProgressRouter();
   const searchParams = useSearchParams();
   const next = safeNext(searchParams.get("next"));
   const [email, setEmail] = useState("");
@@ -102,8 +103,8 @@ function LoginForm() {
           </p>
         )}
 
-        <Button type="submit" variant="primary" disabled={submitting}>
-          {submitting ? "Signing in…" : "Sign in"}
+        <Button type="submit" variant="primary" loading={submitting}>
+          Sign in
         </Button>
       </form>
 

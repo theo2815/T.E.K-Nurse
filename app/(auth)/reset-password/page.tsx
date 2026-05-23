@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/lib/use-progress-router";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { SpeedLines } from "@/components/SpeedLines";
@@ -12,7 +12,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
+  const router = useProgressRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -106,8 +106,8 @@ export default function ResetPasswordPage() {
           </p>
         )}
 
-        <Button type="submit" variant="primary" disabled={!canSubmit}>
-          {submitting ? "Updating…" : "Update password"}
+        <Button type="submit" variant="primary" disabled={!canSubmit} loading={submitting}>
+          Update password
         </Button>
       </form>
     </>

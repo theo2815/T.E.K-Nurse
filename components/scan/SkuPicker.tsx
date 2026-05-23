@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useProgressRouter } from "@/lib/use-progress-router";
 import { Search, Wrench, Beaker, ArrowRight } from "lucide-react";
 import { searchSkusAction } from "@/app/staff/actions";
 import type { SkuSearchRow } from "@/lib/supabase/queries/sku-search";
+import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 
 /**
  * Unified SKU finder used as the camera fallback on /staff/scan.
@@ -21,7 +22,7 @@ export function SkuPicker({
   autoFocus?: boolean;
   onResolve?: (qr: string) => void;
 }) {
-  const router = useRouter();
+  const router = useProgressRouter();
   const id = useId();
 
   const [query, setQuery] = useState("");
@@ -191,6 +192,12 @@ export function SkuPicker({
                           active ? "bg-teal/10" : "hover:bg-teal/5",
                         ].join(" ")}
                       >
+                        <PhotoFrame
+                          src={r.photo_url}
+                          alt={r.name}
+                          size="tiny"
+                          className="shrink-0"
+                        />
                         <span
                           className={[
                             "shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-mono uppercase tracking-[0.1em] text-[10px] font-bold",

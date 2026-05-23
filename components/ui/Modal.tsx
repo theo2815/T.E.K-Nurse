@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 
 /**
  * Console-framed modal dialog. Centered card on desktop, sheet on mobile.
@@ -12,6 +12,7 @@ import { X } from "lucide-react";
 export function Modal({
   open,
   onClose,
+  onBack,
   title,
   eyebrow,
   status = "READY",
@@ -21,6 +22,10 @@ export function Modal({
 }: {
   open: boolean;
   onClose: () => void;
+  /** Optional back affordance — when provided, renders a chevron-left in the
+   *  header that goes "up one level" (e.g. verify → multi-student picker).
+   *  Distinct from `onClose` (which always returns to idle). */
+  onBack?: () => void;
   /** The main label, e.g. "Lend STH-001". */
   title: string;
   /** Mono caps row above title — e.g. "LEND" or "APPROVE PICKUP". */
@@ -95,6 +100,16 @@ export function Modal({
         {/* Top chrome — navy bar with LED + eyebrow + close */}
         <header className="bg-navy-deep flex items-center justify-between px-5 py-3 border-b-[1.5px] border-navy">
           <div className="flex items-center gap-2 min-w-0">
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                aria-label="Back"
+                className="text-mist hover:text-teal transition-colors p-1 -ml-1 mr-1"
+              >
+                <ChevronLeft size={18} strokeWidth={2.25} />
+              </button>
+            )}
             <span
               aria-hidden
               className="relative inline-flex shrink-0 size-2.5 rounded-fab bg-teal"

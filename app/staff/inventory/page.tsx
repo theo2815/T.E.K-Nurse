@@ -13,20 +13,23 @@ import {
 import { CatalogHeader } from "@/components/catalog/CatalogHeader";
 import { CatalogControls } from "@/components/catalog/CatalogControls";
 import { CatalogTypeTabs } from "@/components/catalog/CatalogTypeTabs";
-import { EquipmentList } from "@/components/catalog/EquipmentList";
-import { ConsumableList } from "@/components/catalog/ConsumableList";
+import { InventoryListClient } from "@/components/inventory/InventoryListClient";
+import { NewSkuButton } from "@/components/inventory/NewSkuButton";
 
-function PrintBatchAction() {
+function HeaderActions() {
   return (
-    <Link
-      href="/print/batch"
-      target="_blank"
-      rel="noopener"
-      className="inline-flex items-center justify-center gap-2 bg-transparent text-navy border-[1.5px] border-navy font-mono uppercase text-[14px] tracking-[0.12em] font-bold px-5 py-3 rounded transition-colors hover:bg-paper hover:border-teal hover:text-teal-deep self-start"
-    >
-      <QrCode size={16} strokeWidth={1.75} />
-      Print QR batch
-    </Link>
+    <div className="flex flex-wrap items-center gap-2 self-start">
+      <NewSkuButton />
+      <Link
+        href="/print/batch"
+        target="_blank"
+        rel="noopener"
+        className="inline-flex items-center justify-center gap-2 bg-transparent text-navy border-[1.5px] border-navy font-mono uppercase text-[14px] tracking-[0.12em] font-bold px-5 py-3 rounded transition-colors hover:bg-paper hover:border-teal hover:text-teal-deep"
+      >
+        <QrCode size={16} strokeWidth={1.75} />
+        Print QR batch
+      </Link>
+    </div>
   );
 }
 
@@ -92,6 +95,7 @@ export default async function StaffInventoryPage({
 
   if (tab === "equipment") {
     const filter = parseEquipmentFilter(sp.filter);
+    const isFiltered = filter !== "ALL" || search.length > 0;
     const [skus, summary] = await Promise.all([
       listEquipmentSkus({ filter, search }),
       getEquipmentSummary(),
@@ -105,7 +109,7 @@ export default async function StaffInventoryPage({
             title="Stock"
             overview={`${summary.total} equipment units · ${summary.available} available · ${summary.borrowed} out`}
           />
-          <PrintBatchAction />
+          <HeaderActions />
         </div>
         <CatalogTypeTabs tabs={tabs} active={tab} />
         <CatalogControls
@@ -113,15 +117,18 @@ export default async function StaffInventoryPage({
           defaultFilter="ALL"
           preserveParams={["type"]}
         />
-        <EquipmentList
+        <InventoryListClient
+          type="equipment"
           skus={skus}
           detailHrefBase="/staff/inventory/equipment"
+          isFiltered={isFiltered}
         />
       </div>
     );
   }
 
   const filter = parseConsumableFilter(sp.filter);
+  const isFiltered = filter !== "ALL" || search.length > 0;
   const [skus, summary] = await Promise.all([
     listConsumableSkus({ filter, search }),
     getConsumableSummary(),
@@ -135,7 +142,7 @@ export default async function StaffInventoryPage({
           title="Stock"
           overview={`${summary.sku_count} consumable SKUs · ${summary.in_stock_count} in stock · ${summary.low_stock_count} low`}
         />
-        <PrintBatchAction />
+        <HeaderActions />
       </div>
       <CatalogTypeTabs tabs={tabs} active={tab} />
       <CatalogControls
@@ -143,9 +150,11 @@ export default async function StaffInventoryPage({
         defaultFilter="ALL"
         preserveParams={["type"]}
       />
-      <ConsumableList
+      <InventoryListClient
+        type="consumables"
         skus={skus}
         detailHrefBase="/staff/inventory/consumables"
+        isFiltered={isFiltered}
       />
     </div>
   );
