@@ -1,12 +1,19 @@
 import { Bell } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 import {
   getUnreadCount,
   listMyNotifications,
 } from "@/lib/supabase/queries/notifications";
 import { MarkAllReadButton } from "./MarkAllReadButton";
 import { NotificationsListClient } from "./NotificationsListClient";
+import { NotificationsPageRealtime } from "./NotificationsPageRealtime";
 
 export async function NotificationsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const [rows, unreadCount] = await Promise.all([
     listMyNotifications(),
     getUnreadCount(),
@@ -14,6 +21,7 @@ export async function NotificationsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 md:px-12 py-12 md:py-16">
+      {user && <NotificationsPageRealtime userId={user.id} />}
       <div className="flex flex-col gap-8">
         <div className="flex items-end justify-between gap-4 flex-wrap">
           <div className="flex flex-col gap-2">

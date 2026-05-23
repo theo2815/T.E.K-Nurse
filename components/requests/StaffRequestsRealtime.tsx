@@ -14,19 +14,31 @@ export function StaffRequestsRealtime() {
 
   useEffect(() => {
     const supabase = createClient();
-    const channel = supabase.channel("staff:pending-queue");
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    for (const table of ["borrow_request", "consumable_request"] as const) {
-      channel.on(
-        "postgres_changes",
-        { event: "*", schema: "public", table },
-        () => router.refresh(),
-      );
-    }
+    // Await session before subscribing so the realtime websocket carries
+    // the user's JWT — otherwise RLS-protected broadcasts are filtered out.
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (data.session?.access_token) {
+        supabase.realtime.setAuth(data.session.access_token);
+      }
+      channel = supabase.channel("staff:pending-queue");
+      for (const table of ["borrow_request", "consumable_request"] as const) {
+        channel.on(
+          "postgres_changes",
+          { event: "*", schema: "public", table },
+          () => router.refresh(),
+        );
+      }
+      channel.subscribe();
+    })();
 
-    channel.subscribe();
     return () => {
-      void supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel) void supabase.removeChannel(channel);
     };
   }, [router]);
 

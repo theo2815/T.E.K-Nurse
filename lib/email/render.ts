@@ -115,7 +115,7 @@ function resolve(p: EmailPayload): Resolved {
       };
     case "overdue_reminder":
       return {
-        subject: OverdueReminder.subject(),
+        subject: OverdueReminder.subject(p.payload),
         jsx: OverdueReminder.render(p.payload),
       };
     case "marked_lost":

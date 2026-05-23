@@ -33,23 +33,45 @@ export function NotificationBell({
   // Realtime subscription. Mirrors components/loans/StaffLoansRealtime.tsx
   // intentionally — raw next/navigation useRouter so background pushes from
   // other tabs/users don't trigger the global progress bar.
+  // Realtime subscription. Mirrors components/loans/StaffLoansRealtime.tsx
+  // intentionally — raw next/navigation useRouter so background pushes from
+  // other tabs/users don't trigger the global progress bar.
+  //
+  // Auth-then-subscribe ordering is load-bearing: if subscribe() runs before
+  // the session has hydrated from cookies, the realtime websocket connects
+  // with only the anon key, RLS sees auth.uid() as null, and every broadcast
+  // is filtered out before reaching the client. Awaiting getSession() and
+  // calling realtime.setAuth() guarantees the channel opens with the user's
+  // JWT so the `user_id = auth.uid()` policy on `notification` resolves.
   useEffect(() => {
     const supabase = createClient();
-    const channel = supabase
-      .channel(`notifications:${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "notification",
-          filter: `user_id=eq.${userId}`,
-        },
-        () => router.refresh(),
-      );
-    channel.subscribe();
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (data.session?.access_token) {
+        supabase.realtime.setAuth(data.session.access_token);
+      }
+      channel = supabase
+        .channel(`notifications:${userId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "notification",
+            filter: `user_id=eq.${userId}`,
+          },
+          () => router.refresh(),
+        );
+      channel.subscribe();
+    })();
+
     return () => {
-      void supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel) void supabase.removeChannel(channel);
     };
   }, [userId, router]);
 

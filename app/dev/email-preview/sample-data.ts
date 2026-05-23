@@ -125,6 +125,7 @@ export const sampleData: Record<TemplateName, EmailPayload> = {
     payload: {
       transaction_id: "40000000-0000-0000-0000-00000000000f",
       expected_return_date: "2026-05-20",
+      days_overdue: 1,
     },
   },
   marked_lost: {

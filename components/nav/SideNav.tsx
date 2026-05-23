@@ -4,8 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, QrCode } from "lucide-react";
 import { STAFF_NAV, STUDENT_NAV, type NavItem } from "./navItems";
+import { NavBadge } from "./NavBadge";
 
-export function SideNav({ role }: { role: "staff" | "student" }) {
+export function SideNav({
+  role,
+  badges,
+}: {
+  role: "staff" | "student";
+  badges?: Record<string, number>;
+}) {
   const pathname = usePathname();
   const items = role === "staff" ? STAFF_NAV : STUDENT_NAV;
 
@@ -24,6 +31,7 @@ export function SideNav({ role }: { role: "staff" | "student" }) {
             item={item}
             active={isActive(pathname, item.href)}
             breakBefore={item.groupBreakBefore && idx > 0}
+            badgeCount={badges?.[item.href] ?? 0}
           />
         ))}
       </ul>
@@ -67,10 +75,12 @@ function NavRow({
   item,
   active,
   breakBefore,
+  badgeCount,
 }: {
   item: NavItem;
   active: boolean;
   breakBefore?: boolean;
+  badgeCount: number;
 }) {
   const Icon = item.icon;
   return (
@@ -92,6 +102,7 @@ function NavRow({
         )}
         <Icon size={20} strokeWidth={1.75} />
         <span className="text-[16px]">{item.label}</span>
+        <NavBadge count={badgeCount} variant="inline" label={item.label} />
       </Link>
     </li>
   );

@@ -5,10 +5,15 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * Refreshes the staff dashboard when relevant rows change.
- * Listens to all the tables that feed the home dashboard.
+ * Subscribes to changes on this user's notification rows and triggers
+ * router.refresh() on any insert/update/delete. Mount on NotificationsPage
+ * so the inbox surface updates live when new notifications arrive.
+ *
+ * Same auth-then-subscribe ordering as NotificationBell: await getSession
+ * and call realtime.setAuth before subscribe(), otherwise the websocket
+ * opens with the anon key and RLS filters every broadcast out.
  */
-export function StaffHomeRealtime() {
+export function NotificationsPageRealtime({ userId }: { userId: string }) {
   const router = useRouter();
 
   useEffect(() => {
@@ -16,27 +21,24 @@ export function StaffHomeRealtime() {
     let cancelled = false;
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    // Await session before subscribing so the realtime websocket carries
-    // the user's JWT — otherwise RLS-protected broadcasts are filtered out.
     void (async () => {
       const { data } = await supabase.auth.getSession();
       if (cancelled) return;
       if (data.session?.access_token) {
         supabase.realtime.setAuth(data.session.access_token);
       }
-      channel = supabase.channel("staff:home");
-      for (const table of [
-        "borrow_request",
-        "consumable_request",
-        "borrow_transaction",
-        "consumable_usage",
-      ] as const) {
-        channel.on(
+      channel = supabase
+        .channel(`notifications-page:${userId}`)
+        .on(
           "postgres_changes",
-          { event: "*", schema: "public", table },
+          {
+            event: "*",
+            schema: "public",
+            table: "notification",
+            filter: `user_id=eq.${userId}`,
+          },
           () => router.refresh(),
         );
-      }
       channel.subscribe();
     })();
 
@@ -44,7 +46,7 @@ export function StaffHomeRealtime() {
       cancelled = true;
       if (channel) void supabase.removeChannel(channel);
     };
-  }, [router]);
+  }, [userId, router]);
 
   return null;
 }

@@ -4,8 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { QrCode } from "lucide-react";
 import { STAFF_NAV, STUDENT_NAV } from "./navItems";
+import { NavBadge } from "./NavBadge";
 
-export function BottomNav({ role }: { role: "staff" | "student" }) {
+export function BottomNav({
+  role,
+  badges,
+}: {
+  role: "staff" | "student";
+  badges?: Record<string, number>;
+}) {
   const pathname = usePathname();
   const items = (role === "staff" ? STAFF_NAV : STUDENT_NAV).filter(
     (i) => !i.desktopOnly,
@@ -36,6 +43,7 @@ export function BottomNav({ role }: { role: "staff" | "student" }) {
             );
           }
 
+          const badgeCount = badges?.[item.href] ?? 0;
           return (
             <li key={item.href}>
               <Link
@@ -48,11 +56,18 @@ export function BottomNav({ role }: { role: "staff" | "student" }) {
                     className="absolute top-0 h-[2px] w-8 bg-teal"
                   />
                 )}
-                <Icon
-                  size={24}
-                  strokeWidth={1.75}
-                  className={active ? "text-navy" : "text-navy/50"}
-                />
+                <span className="relative">
+                  <Icon
+                    size={24}
+                    strokeWidth={1.75}
+                    className={active ? "text-navy" : "text-navy/50"}
+                  />
+                  <NavBadge
+                    count={badgeCount}
+                    variant="overlay"
+                    label={item.label}
+                  />
+                </span>
                 <span
                   className={`font-mono uppercase text-[11px] tracking-[0.05em] font-semibold ${
                     active ? "text-navy" : "text-navy/50"

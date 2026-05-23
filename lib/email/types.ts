@@ -158,11 +158,20 @@ export type ReturnLostPayload = {
 };
 
 export type OverdueReminderPayload = {
-  /** supabase/migrations/0006_return_condition.sql:204 */
+  /**
+   * Enqueued from three call sites, all in the overdue cadence:
+   *   • supabase/migrations/0013_scheduled_jobs.sql — run_overdue_cadence()
+   *     T+0 reminder (BORROWED + due today)        days_overdue: 0
+   *     T+3 reminder (OVERDUE + 3 days past)       days_overdue: 3
+   *   • supabase/migrations/0013_scheduled_jobs.sql — tr_borrow_transaction_after_update
+   *     T+1 flip BORROWED → OVERDUE                days_overdue: 1
+   * T+7 lands in OVERDUE → LOST and uses `marked_lost`, not this template.
+   */
   template: "overdue_reminder";
   payload: {
     transaction_id: string;
     expected_return_date: string;
+    days_overdue: 0 | 1 | 3;
   };
 };
 

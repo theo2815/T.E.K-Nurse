@@ -277,12 +277,150 @@ If a target address is already in the allowlist, the rewrite is skipped (the
 email goes to that address as-is, just with an `X-Tek-Nurse-Env: development`
 marker header).
 
+## Scheduled jobs (Phase 9)
+
+`0013_scheduled_jobs.sql` adds three pg_cron jobs on top of the per-minute
+email drainer. All three call SQL functions only — no HTTP routes, no Vault
+secrets, no application server involvement. The existing AFTER UPDATE
+triggers do the count-bucket moves, audit log writes, in-app notifications,
+and `enqueue_email` rows; the drainer ships those rows to Brevo.
+
+| Job | Schedule (UTC) | PHT | Function |
+|---|---|---|---|
+| `tek-nurse-expire-requests` | `*/15 * * * *` | every 15 min | `public.run_request_expiry()` |
+| `tek-nurse-overdue-cadence` | `0 1 * * *` | 09:00 daily | `public.run_overdue_cadence()` |
+| `tek-nurse-inventory-alerts` | `0 1 * * *` | 09:00 daily | `public.run_inventory_alerts()` |
+
+### What each job does
+
+- **Expire requests** — flips `borrow_request` and `consumable_request` rows
+  whose `expires_at` (pre-approval) or `pickup_expires_at` (post-approval) is
+  in the past to `EXPIRED`. Triggers free the reservation, audit, notify, and
+  send the appropriate `borrow_expired` / `borrow_pickup_expired` /
+  `consumable_request_expired` / `consumable_pickup_expired` email.
+
+- **Overdue cadence** — daily T+0 / T+1 / T+3 / T+7 walk on
+  `borrow_transaction`:
+  - **T+0** (due today, BORROWED) — courtesy reminder; status unchanged.
+  - **T+1** (1 day past, BORROWED → OVERDUE) — status flip; trigger emits.
+  - **T+3** (3 days past, OVERDUE) — escalation reminder; status unchanged.
+  - **T+7** (≥7 days past, OVERDUE → LOST) — status flip; trigger does the
+    count move and emits the `marked_lost` email.
+  - T+0 and T+3 are deduped per row via `borrow_transaction.last_reminder_at`
+    so manual + scheduled runs on the same day never double-send.
+
+- **Inventory alerts** — daily scan:
+  - Equipment SKUs where `available_units < low_stock_threshold`.
+  - Consumable SKUs whose total active-lot remaining is below threshold.
+  - Consumable lots within `expiration_warning_days` of expiry.
+  - Each (scope, entity) is rate-limited via `public.cron_alert_state` so the
+    same alert pings staff at most once per 7 days.
+
+### System actor (audit_log)
+
+Cron-driven UPDATEs have no `auth.uid()` context, so the existing triggers
+that call `write_audit_log` would fail the original actor-not-null check.
+`0013` drops the NOT NULL on `audit_log.actor_id` and replaces
+`write_audit_log` to insert `actor_id = NULL` when neither `p_actor_id` nor
+`auth.uid()` resolve to a user. `NULL = system` is the canonical encoding;
+no synthetic users row is provisioned (avoids `public.users` → `auth.users`
+FK contamination and keeps `is_staff()` / student-search / activity feed
+naturally clean).
+
+Phase 10 reports that want to hide system actions can filter
+`actor_id IS NOT NULL`; reports that want to surface them can render
+`coalesce(actor.full_name, '(system)')`.
+
+### Verifying the jobs are scheduled
+
+```sql
+select jobid, jobname, schedule, active
+from cron.job
+where jobname like 'tek-nurse-%'
+order by jobname;
+
+select jobname, start_time, status, return_message
+from cron.job_run_details
+where jobname like 'tek-nurse-%'
+order by start_time desc
+limit 20;
+```
+
+### Local dev — poking the jobs manually
+
+`pg_cron` runs inside Supabase. Until the staging/prod deploy lands, dev runs
+the jobs on demand:
+
+```bash
+npm run cron:poke
+```
+
+`scripts/cron-poke.mjs` invokes the three RPCs via the service-role key from
+`.env.local`, prints each function's JSON return value, and then triggers a
+`POST /api/email/drain` so any emails the jobs enqueued land in your inbox
+in the same call. Use this in conjunction with manual SQL to seed an overdue
+or low-stock state:
+
+```sql
+-- Make one borrow_transaction look 3 days overdue
+update public.borrow_transaction
+set expected_return_date = (now() at time zone 'Asia/Manila')::date - 3,
+    status               = 'OVERDUE',
+    last_reminder_at     = null   -- reset dedupe so the cron will re-send
+where id = '<some-borrow-transaction-id>';
+
+-- Make a consumable lot look like it's expiring this week
+update public.consumable_lot
+set expiration_date = current_date + 5
+where id = '<some-lot-id>';
+```
+
+Then `npm run cron:poke` and check the inbox / `select * from notification`
+for the system reminder.
+
+### Realtime publication
+
+The bell, popover, and notifications page rely on Supabase Realtime
+broadcasting `INSERT` / `UPDATE` events from `public.notification`.
+`0014_realtime_notification.sql` adds the table to `supabase_realtime`;
+if you're working on a fresh project that hasn't run that migration yet,
+the symptom is "new notifications only appear when the next action
+triggers `router.refresh()`."
+
+Inspect which tables are broadcasting:
+
+```sql
+select schemaname, tablename
+from pg_publication_tables
+where pubname = 'supabase_realtime'
+order by schemaname, tablename;
+```
+
+Expect `notification`, `borrow_transaction`, `borrow_request`,
+`consumable_request` at minimum. The first comes from 0014; the others
+were added via the Supabase Dashboard during Phase 6 / 8 and are not
+encoded in any migration — if you're cloning the project, you'll need
+to add them manually via Dashboard → Database → Publications → supabase_realtime.
+
+### Inventory alert dedupe (cron_alert_state)
+
+```sql
+-- See what's currently rate-limited
+select scope, entity_id, last_alerted_at
+from public.cron_alert_state
+order by last_alerted_at desc;
+
+-- Reset for a specific SKU so the next run alerts again
+delete from public.cron_alert_state
+where scope = 'equipment_low_stock'
+  and entity_id = '<sku-id>';
+```
+
 ## Notes for future phases
 
 - **Phase 2 (Auth)**: the signup form must enforce `@cit.edu` client-side, send
   `full_name` and `year_section` in `options.data` so `handle_new_user` picks
   them up from `raw_user_meta_data`, and trigger email verification.
-- **Phase 9 (Cron)**: scheduled jobs need to write `audit_log` rows for actions
-  they perform (`mark_overdue`, `auto_expire_request`, `auto_mark_lost`). Pass
-  an explicit `p_actor_id` to `public.write_audit_log()` — a dedicated "system"
-  user row can be added then.
+- **Phase 10 (Reports)**: when listing audit_log activity, filter
+  `actor_id IS NOT NULL` if the staff view should only show human-driven
+  actions; or `coalesce(actor.full_name, '(system)')` to render cron rows.

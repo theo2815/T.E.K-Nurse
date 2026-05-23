@@ -14,30 +14,41 @@ export function RequestsRealtime({ studentId }: { studentId: string }) {
 
   useEffect(() => {
     const supabase = createClient();
-    const channel = supabase.channel(`my-requests:${studentId}`);
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    const tables = [
-      "borrow_request",
-      "consumable_request",
-      "borrow_transaction",
-    ] as const;
+    // Await session before subscribing so the realtime websocket carries
+    // the user's JWT — otherwise RLS-protected broadcasts are filtered out.
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (data.session?.access_token) {
+        supabase.realtime.setAuth(data.session.access_token);
+      }
+      channel = supabase.channel(`my-requests:${studentId}`);
+      const tables = [
+        "borrow_request",
+        "consumable_request",
+        "borrow_transaction",
+      ] as const;
+      for (const table of tables) {
+        channel.on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table,
+            filter: `student_id=eq.${studentId}`,
+          },
+          () => router.refresh(),
+        );
+      }
+      channel.subscribe();
+    })();
 
-    for (const table of tables) {
-      channel.on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table,
-          filter: `student_id=eq.${studentId}`,
-        },
-        () => router.refresh(),
-      );
-    }
-
-    channel.subscribe();
     return () => {
-      void supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel) void supabase.removeChannel(channel);
     };
   }, [studentId, router]);
 
