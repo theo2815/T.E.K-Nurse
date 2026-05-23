@@ -10,6 +10,8 @@ Plain numbered SQL files. Apply them in order via the **Supabase SQL Editor**
 | `migrations/0001_initial_schema.sql` | Extensions, enums, all 12 tables, CHECK constraints, indexes, `updated_at` triggers. |
 | `migrations/0002_rls_policies.sql` | `public.is_staff()` helper + RLS enabled + per-table policies. |
 | `migrations/0003_functions_and_triggers.sql` | Signup mirror, audit-log writer, all state-machine triggers, FIFO logic. |
+| `migrations/0004_add_declined_enum.sql` … `migrations/0011_consumable_lot_student_select.sql` | Incremental schema/trigger evolutions. Apply in order. |
+| `migrations/0012_email_cron.sql` | Phase 8c: `pg_cron` + `pg_net`, `claimed_at` lease on `pending_email`, `fetch_pending_emails()` claim function, per-minute drain schedule. **Requires the `app.cron_secret` setup below before the cron job will work.** |
 | `seed.sql` | Sample users, SKUs, lots, transactions, usage events, audit-log entries. Optional but recommended for demos. |
 
 ## First-time apply (fresh Supabase project)
@@ -135,15 +137,151 @@ update public.users
  where email = 'new.staff@cit.edu';
 ```
 
+## Email worker (cron + drain)
+
+Phase 8c wires `pending_email` rows to a real SMTP delivery via Brevo. The
+flow is:
+
+```
+Trigger → public.enqueue_email(...) → INSERT pending_email (QUEUED)
+                                         ⋮
+                              every minute, pg_cron
+                                         ⋮
+public.cron_drain_emails()
+  → net.http_post(VERCEL_URL/api/email/drain,
+                  Authorization: Bearer ${app.cron_secret})
+  → POST /api/email/drain
+       fetch_pending_emails(20)  -- atomic claim with 5-min lease
+       → for each row: nodemailer.sendMail(...)
+       → UPDATE status='SENT'/'FAILED' + last_error/attempts
+```
+
+### One-time setup after applying `0012_email_cron.sql`
+
+The migration is committed without secrets. Before pg_cron can authenticate
+against the drain route, store the shared secret in **Supabase Vault** (the
+SQL editor cannot `alter database` — Vault is the supported way to hand a
+secret to a database function on Supabase).
+
+1. Generate the secret:
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+2. Put the value in **all three** places (same value everywhere):
+
+   - `.env.local` → `CRON_SECRET=...`
+   - Vercel → Project Settings → Environment Variables → `CRON_SECRET`
+   - Supabase Vault, via the SQL editor:
+
+     ```sql
+     select vault.create_secret(
+       'paste-the-64-hex-CRON_SECRET-here',
+       'tek_cron_secret',
+       'Bearer token used by pg_cron to POST /api/email/drain'
+     );
+     ```
+
+   Verify:
+
+   ```sql
+   select name, description, created_at
+   from vault.decrypted_secrets
+   where name = 'tek_cron_secret';
+   ```
+
+   If you ever rotate the secret, **update** instead of create:
+
+   ```sql
+   select vault.update_secret(
+     (select id from vault.secrets where name = 'tek_cron_secret'),
+     'new-64-hex-value-here'
+   );
+   ```
+
+If the three values don't match, pg_cron's POST will 401 against the drain
+route. You'll see this in `cron.job_run_details` (status `succeeded` — the
+function ran without error) and `net._http_response` (the actual HTTP reply,
+where `status_code` will be 401). The route also returns the body
+`"Unauthorized"`.
+
+### SMTP credentials (Brevo)
+
+The drain route reads SMTP settings from env vars (`.env.local` for dev,
+Vercel project settings for production). To find them in Brevo:
+
+1. Top-right profile menu → **SMTP & API** → **SMTP** tab
+2. **SMTP Server / Port / Login** → maps to `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER`
+3. **Your SMTP Keys** (lower table) — click the active row to reveal the full
+   value → that's `SMTP_PASS`
+4. `EMAIL_FROM` must be a sender verified under **Senders, Domains & Dedicated
+   IPs → Senders**.
+
+See `.env.local.example` for the full var block and inline comments.
+
+> **Deliverability caveat (tech debt)**: sending `From: t.e.k.nurse.support@gmail.com`
+> via Brevo's IPs causes a DMARC fail at Gmail/Yahoo/Outlook (their DMARC says
+> "only Google may send as `@gmail.com`"). Expect spam-folder placement for
+> recipients outside Gmail and some rejection from strict mail servers. For a
+> capstone demo this is survivable; for real production buy a domain (e.g.
+> `teknurse.app` for ~$12/yr) and verify it in Brevo so sends come from
+> `noreply@teknurse.app` with proper DKIM/DMARC.
+
+### Verifying the cron job is running
+
+```sql
+-- Should show the scheduled job, schedule '* * * * *', and active = true
+select jobid, jobname, schedule, command, active
+from cron.job
+where jobname = 'tek-nurse-drain-emails';
+
+-- Recent run history (last 20 invocations). status = 'succeeded' means the
+-- function returned; HTTP delivery status is in net._http_response.
+select start_time, end_time, status, return_message
+from cron.job_run_details
+where jobname = 'tek-nurse-drain-emails'
+order by start_time desc
+limit 20;
+
+-- pg_net's HTTP response log (per outbound POST)
+select id, status_code, content_type, created
+from net._http_response
+order by created desc
+limit 10;
+```
+
+### Local dev (pg_cron cannot reach localhost)
+
+Cron runs inside Supabase and can only POST to publicly reachable URLs, so
+in local development the per-minute drain does not fire against
+`http://localhost:3000`. Drain manually instead:
+
+```bash
+npm run email:drain
+```
+
+The `scripts/drain.mjs` helper loads `CRON_SECRET` from `.env.local` and
+POSTs to the local dev server. It prints the JSON response (`drained / sent /
+retried / failed_terminal` counts).
+
+### Dev guardrail
+
+When `NODE_ENV !== "production"` the worker rewrites every outbound `To:`
+address to the first entry in `EMAIL_DEV_ALLOWLIST`, prefixes the subject
+with `[DEV → original@addr]`, and stamps an `X-Original-To` header so you
+can see the true recipient. This prevents real students/staff from receiving
+test emails during local development.
+
+If a target address is already in the allowlist, the rewrite is skipped (the
+email goes to that address as-is, just with an `X-Tek-Nurse-Env: development`
+marker header).
+
 ## Notes for future phases
 
 - **Phase 2 (Auth)**: the signup form must enforce `@cit.edu` client-side, send
   `full_name` and `year_section` in `options.data` so `handle_new_user` picks
   them up from `raw_user_meta_data`, and trigger email verification.
-- **Phase 8 (Email)**: build a worker that polls `public.pending_email WHERE
-  status = 'QUEUED'`, sends via your chosen provider, and updates
-  `status / attempts / sent_at / last_error`. Provider can be Gmail SMTP (via
-  Nodemailer), Resend, SendGrid, etc. — the schema is provider-agnostic.
 - **Phase 9 (Cron)**: scheduled jobs need to write `audit_log` rows for actions
   they perform (`mark_overdue`, `auto_expire_request`, `auto_mark_lost`). Pass
   an explicit `p_actor_id` to `public.write_audit_log()` — a dedicated "system"

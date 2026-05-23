@@ -1,16 +1,25 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Bell } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import type { NotificationRow } from "@/lib/supabase/queries/notifications";
 import { AvatarMenu } from "./AvatarMenu";
 
 export function TopBar({
+  userId,
   fullName,
   email,
   homeHref,
+  initialUnreadCount,
+  initialNotifications,
+  notificationsHref,
 }: {
+  userId: string;
   fullName: string;
   email: string;
   homeHref: string;
+  initialUnreadCount: number;
+  initialNotifications: NotificationRow[];
+  notificationsHref: string;
 }) {
   const initials = fullName
     .split(/\s+/)
@@ -41,13 +50,12 @@ export function TopBar({
         </span>
       </Link>
       <div className="flex items-center gap-5">
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="text-slate hover:text-navy transition-colors"
-        >
-          <Bell size={22} strokeWidth={1.75} />
-        </button>
+        <NotificationBell
+          userId={userId}
+          initialUnreadCount={initialUnreadCount}
+          initialRows={initialNotifications}
+          fullPageHref={notificationsHref}
+        />
         <AvatarMenu initials={initials} fullName={fullName} email={email} />
       </div>
     </header>

@@ -6,11 +6,13 @@ const PUBLIC_PATHS = [
   "/signup",
   "/forgot-password",
   "/reset-password",
-  "/auth/callback",
   "/design-system",
   // /s/* is the QR short-URL redirector. The page itself handles auth so it
   // can preserve the scanned QR through login via ?next=.
   "/s",
+  // /api/email/drain authenticates via Bearer CRON_SECRET (called by pg_cron
+  // server-to-server — no cookies). Must bypass the cookie-redirect branch.
+  "/api/email/drain",
 ];
 
 function isPublicPath(pathname: string) {
