@@ -16,9 +16,13 @@ type Props = {
  * View mode  → single circular pencil FAB (teal) bottom-right.
  * Edit mode  → floating pill with [✕ Cancel] | [✓ Save changes].
  *
- * Fixed positioning with mobile bottom-nav clearance (the lab uses a PWA
- * with BottomNav on mobile; bottom-24 keeps the FAB above it). z-30 keeps
- * it above page content but below modals + toasts.
+ * Mobile vertical math: BottomNav is `h-16` (64px) plus
+ * `env(safe-area-inset-bottom)` (≈34px on iPhone with home indicator). A
+ * hardcoded `bottom-24` (96px) ends up flush against — or inside — the
+ * nav in installed-PWA mode. Safe-area-aware calc keeps the FAB exactly
+ * 20px above the nav's visible top edge on every device:
+ *   bottom = env(safe-area-inset-bottom) + 64 (nav) + 20 (breathing) = +84
+ * Desktop has no BottomNav, just SideNav on the left — fixed 32px is fine.
  */
 export function EditModeFab({
   isEditing,
@@ -33,7 +37,7 @@ export function EditModeFab({
         type="button"
         onClick={onEdit}
         aria-label="Edit settings"
-        className="fixed bottom-24 md:bottom-8 right-6 md:right-8 z-30 size-14 md:size-16 rounded-fab bg-teal text-white shadow-[0_4px_20px_-2px_rgba(31,58,110,0.25)] hover:bg-teal-deep transition-colors flex items-center justify-center"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] md:bottom-8 right-6 md:right-8 z-30 size-14 md:size-16 rounded-fab bg-teal text-white shadow-[0_4px_20px_-2px_rgba(31,58,110,0.25)] hover:bg-teal-deep transition-colors flex items-center justify-center"
       >
         <Pencil size={22} strokeWidth={2.25} />
       </button>
@@ -44,7 +48,7 @@ export function EditModeFab({
     <div
       role="group"
       aria-label="Edit actions"
-      className="fixed bottom-24 md:bottom-8 right-6 md:right-8 z-30 flex items-stretch rounded-fab bg-paper border-[1.5px] border-navy shadow-[0_4px_20px_-2px_rgba(31,58,110,0.25)] overflow-hidden"
+      className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+84px)] md:bottom-8 right-6 md:right-8 z-30 flex items-stretch rounded-fab bg-paper border-[1.5px] border-navy shadow-[0_4px_20px_-2px_rgba(31,58,110,0.25)] overflow-hidden"
     >
       <button
         type="button"

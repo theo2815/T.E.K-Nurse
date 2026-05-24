@@ -11,8 +11,11 @@ import {
   Wrench,
   Beaker,
   X,
+  Download,
+  Check,
 } from "lucide-react";
 import { PrintSheet9Up } from "@/components/qr/PrintSheet9Up";
+import { qrToPngDataUrl, qrToSvgString } from "@/lib/qr/generate";
 
 export type BatchPickerEntry = {
   qrCode: string;
@@ -47,6 +50,10 @@ export function BatchPicker({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<Tab>("equipment");
   const [search, setSearch] = useState("");
+  const [downloadingZip, setDownloadingZip] = useState(false);
+  const [downloadedZip, setDownloadedZip] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [downloadedPdf, setDownloadedPdf] = useState(false);
 
   const tabEntries = useMemo(() => {
     if (tab === "selected") {
@@ -87,6 +94,173 @@ export function BatchPicker({
     setSelected(new Set());
   }
 
+  // Selected entries preserved in `entries` order (qr_code order from the
+  // server) — both download handlers need to walk the list in this order so
+  // the ZIP/PDF mirror what staff sees on the print preview sheet.
+  const selectedEntriesOrdered = useMemo(
+    () => entries.filter((e) => selected.has(e.qrCode)),
+    [entries, selected],
+  );
+
+  async function handleDownloadZip() {
+    if (selectedEntriesOrdered.length === 0) return;
+    setDownloadingZip(true);
+    try {
+      const { default: JSZip } = await import("jszip");
+      const zip = new JSZip();
+      for (const e of selectedEntriesOrdered) {
+        const dataUrl = await qrToPngDataUrl(e.qrCode);
+        const base64 = dataUrl.split(",", 2)[1] ?? "";
+        zip.file(`tek-nurse-qr-${e.qrCode}.png`, base64, { base64: true });
+      }
+      const blob = await zip.generateAsync({ type: "blob" });
+      triggerBlobDownload(blob, "tek-nurse-qr-batch.zip");
+      setDownloadedZip(true);
+      setTimeout(() => setDownloadedZip(false), 1800);
+    } finally {
+      setDownloadingZip(false);
+    }
+  }
+
+  async function handleDownloadPdf() {
+    if (selectedEntriesOrdered.length === 0) return;
+    setDownloadingPdf(true);
+    try {
+      const [{ jsPDF }, { svg2pdf }] = await Promise.all([
+        import("jspdf"),
+        import("svg2pdf.js"),
+      ]);
+
+      const pdf = new jsPDF({
+        unit: "mm",
+        format: "a4",
+        orientation: "portrait",
+      });
+
+      // Geometry mirrors PrintSheet9Up + PrintCard "grid". Card typography
+      // uses jsPDF's built-in Courier/Times stand-ins rather than the project
+      // brand fonts (Fraunces / Be Vietnam Pro / JetBrains Mono) — embedding
+      // those would add ~400KB and the PDF is a printer-less fallback, not
+      // the canonical artifact.
+      const PAGE_PAD_TOP = 8;
+      const GRID_LEFT = 11; // (210 − 188 grid width) / 2
+      const CARD_W = 60;
+      const CARD_H = 85;
+      const COL_GAP = 4;
+      const ROW_GAP = 4;
+      const CARD_PAD = 5;
+      const QR_SIZE = 38;
+
+      // svg2pdf needs SVG elements attached to the DOM so it can resolve
+      // computed sizes. We park them off-screen and remove after each draw.
+      const host = document.createElement("div");
+      host.style.position = "fixed";
+      host.style.left = "-10000px";
+      host.style.top = "0";
+      host.setAttribute("aria-hidden", "true");
+      document.body.appendChild(host);
+
+      try {
+        for (let i = 0; i < selectedEntriesOrdered.length; i++) {
+          const e = selectedEntriesOrdered[i];
+          const slot = i % 9;
+          const col = slot % 3;
+          const row = Math.floor(slot / 3);
+          if (i > 0 && slot === 0) pdf.addPage();
+
+          const cardX = GRID_LEFT + col * (CARD_W + COL_GAP);
+          const cardY = PAGE_PAD_TOP + row * (CARD_H + ROW_GAP);
+          const cx = cardX + CARD_W / 2;
+
+          // Card hairline border
+          pdf.setDrawColor(212);
+          pdf.setLineWidth(0.15);
+          pdf.rect(cardX, cardY, CARD_W, CARD_H);
+
+          let y = cardY + CARD_PAD;
+
+          // T·E·K NURSE lockup
+          pdf.setFont("courier", "bold");
+          pdf.setFontSize(7);
+          pdf.setTextColor(15, 27, 50);
+          y += 2.6;
+          pdf.text("T·E·K  NURSE", cx, y, {
+            align: "center",
+            charSpace: 0.4,
+          });
+          y += 2.4;
+
+          // Divider hairline
+          pdf.setDrawColor(220);
+          pdf.line(cardX + CARD_PAD, y, cardX + CARD_W - CARD_PAD, y);
+          y += 2.4;
+
+          // QR (vector via svg2pdf)
+          const svgString = await qrToSvgString(e.qrCode);
+          const wrap = document.createElement("div");
+          wrap.innerHTML = svgString;
+          const svgEl = wrap.querySelector("svg");
+          if (svgEl) {
+            host.appendChild(svgEl);
+            const qrX = cardX + (CARD_W - QR_SIZE) / 2;
+            await svg2pdf(svgEl, pdf, {
+              x: qrX,
+              y,
+              width: QR_SIZE,
+              height: QR_SIZE,
+            });
+            host.removeChild(svgEl);
+          }
+          y += QR_SIZE + 3;
+
+          // SKU ID — mono bold
+          pdf.setFont("courier", "bold");
+          pdf.setFontSize(13);
+          pdf.setTextColor(15, 27, 50);
+          y += 4.5;
+          pdf.text(e.qrCode, cx, y, { align: "center", charSpace: 0.3 });
+          y += 2.5;
+
+          // Name — display italic, clamp to 2 lines
+          pdf.setFont("times", "bolditalic");
+          pdf.setFontSize(11);
+          const nameLines = pdf
+            .splitTextToSize(e.name, CARD_W - CARD_PAD * 2)
+            .slice(0, 2);
+          for (const line of nameLines) {
+            y += 4.2;
+            pdf.text(line, cx, y, { align: "center" });
+          }
+
+          // Location — italic, anchored at card bottom
+          if (e.location) {
+            pdf.setFont("times", "italic");
+            pdf.setFontSize(8);
+            pdf.setTextColor(110, 110, 122);
+            const locLines = pdf
+              .splitTextToSize(e.location, CARD_W - CARD_PAD * 2)
+              .slice(0, 2);
+            const bottom = cardY + CARD_H - CARD_PAD;
+            let locY = bottom - 3.2 * (locLines.length - 1);
+            for (const line of locLines) {
+              pdf.text(line, cx, locY, { align: "center" });
+              locY += 3.2;
+            }
+          }
+        }
+      } finally {
+        document.body.removeChild(host);
+      }
+
+      const blob = pdf.output("blob");
+      triggerBlobDownload(blob, "tek-nurse-qr-sheet.pdf");
+      setDownloadedPdf(true);
+      setTimeout(() => setDownloadedPdf(false), 1800);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }
+
   const equipmentCount = entries.filter((e) => e.type === "equipment").length;
   const consumableCount = entries.filter((e) => e.type === "consumable").length;
 
@@ -94,11 +268,8 @@ export function BatchPicker({
   // server), filtered to only the selected ones.
   const selectedCards = useMemo(
     () =>
-      entries
-        .filter((e) => selected.has(e.qrCode))
-        .map((e) => renderedCards[e.qrCode])
-        .filter(Boolean),
-    [entries, selected, renderedCards],
+      selectedEntriesOrdered.map((e) => renderedCards[e.qrCode]).filter(Boolean),
+    [selectedEntriesOrdered, renderedCards],
   );
 
   return (
@@ -134,6 +305,40 @@ export function BatchPicker({
                 </span>{" "}
                 selected
               </span>
+              <button
+                type="button"
+                onClick={handleDownloadZip}
+                disabled={selected.size === 0 || downloadingZip}
+                className="inline-flex items-center justify-center gap-2 bg-transparent text-navy border-[1.5px] border-navy font-mono uppercase text-[15px] tracking-[0.12em] font-bold w-full md:w-auto px-5 py-3 rounded transition-colors hover:bg-paper hover:border-teal hover:text-teal-deep disabled:opacity-40 disabled:pointer-events-none"
+              >
+                {downloadedZip ? (
+                  <Check size={16} strokeWidth={2} />
+                ) : (
+                  <Download size={16} strokeWidth={1.75} />
+                )}
+                {downloadedZip
+                  ? "Saved"
+                  : downloadingZip
+                    ? "Saving…"
+                    : "Download ZIP"}
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                disabled={selected.size === 0 || downloadingPdf}
+                className="inline-flex items-center justify-center gap-2 bg-transparent text-navy border-[1.5px] border-navy font-mono uppercase text-[15px] tracking-[0.12em] font-bold w-full md:w-auto px-5 py-3 rounded transition-colors hover:bg-paper hover:border-teal hover:text-teal-deep disabled:opacity-40 disabled:pointer-events-none"
+              >
+                {downloadedPdf ? (
+                  <Check size={16} strokeWidth={2} />
+                ) : (
+                  <Download size={16} strokeWidth={1.75} />
+                )}
+                {downloadedPdf
+                  ? "Saved"
+                  : downloadingPdf
+                    ? "Saving…"
+                    : "Download PDF"}
+              </button>
               <button
                 type="button"
                 onClick={() => window.print()}
@@ -302,6 +507,17 @@ export function BatchPicker({
       ) : null}
     </>
   );
+}
+
+function triggerBlobDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 function TabButton({

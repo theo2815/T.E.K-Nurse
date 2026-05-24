@@ -95,9 +95,16 @@ const MAX_NAME = 80;
 
 function appBaseUrl(): string {
   const raw =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "http://localhost:3000";
+    process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL;
+  if (!raw) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "NEXT_PUBLIC_APP_URL must be set in production. " +
+          "Configure it in Vercel → Settings → Environment Variables.",
+      );
+    }
+    return "http://localhost:3000";
+  }
   return raw.replace(/\/+$/, "");
 }
 

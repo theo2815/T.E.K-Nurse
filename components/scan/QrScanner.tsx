@@ -199,9 +199,26 @@ export function QrScanner({ onResolve, paused }: Props) {
           if (lockRef.current) return;
 
           const qr = extractQrCode(decodedText);
+          const last = lastDecodeRef.current;
+          const now = Date.now();
+
           if (!qr) {
-            // Not one of ours — re-arm and let the user try again.
+            // Not one of ours — re-arm and let the user try again. Dedupe by
+            // the raw decoded text so holding the camera on an unknown QR
+            // doesn't stack a fresh toast every frame at 10fps. The stable
+            // sonner id is a second line of defense: even if a different
+            // foreign QR slips through, it replaces the existing toast
+            // instead of stacking a new one.
+            if (
+              last &&
+              last.qr === decodedText &&
+              now - last.at < DUP_DECODE_WINDOW_MS
+            ) {
+              return;
+            }
+            lastDecodeRef.current = { qr: decodedText, at: now };
             toast.error("Unrecognized QR code", {
+              id: "scan-unrecognized",
               description:
                 "That QR isn't in T.E.K Nurse format. Try scanning a card from this lab.",
             });
@@ -210,8 +227,6 @@ export function QrScanner({ onResolve, paused }: Props) {
 
           // Same QR scanned again too quickly — silently ignore so closing a
           // modal while still pointed at the card doesn't immediately re-fire.
-          const last = lastDecodeRef.current;
-          const now = Date.now();
           if (last && last.qr === qr && now - last.at < DUP_DECODE_WINDOW_MS) {
             return;
           }

@@ -109,10 +109,6 @@ export default async function StaffStudentDetailPage({
       </section>
 
       <StudentSuspensionHistory events={suspensionHistory} />
-
-      <p className="font-mono uppercase text-caps-sm text-slate/70 tracking-[0.08em] -mt-2">
-        Profile editing arrives in Phase 13 · staff actions on loans live on /staff/scan + /staff/loans
-      </p>
     </div>
   );
 }

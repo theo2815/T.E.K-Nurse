@@ -3,6 +3,9 @@ import { Montserrat, Manrope, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { RouteProgress } from "@/components/ui/RouteProgress";
 import { InteractionLock } from "@/components/ui/InteractionLock";
+import { NavigationSplash } from "@/components/loading/NavigationSplash";
+import { AppSplash } from "@/components/loading/AppSplash";
+import { HideAppSplashOnMount } from "@/components/loading/HideAppSplashOnMount";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import "./globals.css";
 
@@ -57,12 +60,16 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${display.variable} ${body.variable} ${mono.variable}`}
+      style={{ backgroundColor: "#F0F4F8" }}
     >
-      <body className="min-h-full">
+      <body className="min-h-full" style={{ backgroundColor: "#F0F4F8" }}>
         {children}
+        <NavigationSplash />
         <RouteProgress />
         <InteractionLock />
         <ServiceWorkerRegister />
+        <AppSplash />
+        <HideAppSplashOnMount />
         <Toaster
           position="top-center"
           richColors

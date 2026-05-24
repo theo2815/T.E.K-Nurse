@@ -18,14 +18,23 @@ import QRCode from "qrcode";
  * We expose both SVG (vector, ideal for print) and PNG data URL (for download).
  */
 
-const DEFAULT_APP_URL = "http://localhost:3000";
-
 /**
  * Resolve the public app URL. Reads `NEXT_PUBLIC_APP_URL` at module load.
- * Falls back to localhost for development. Trailing slashes are stripped.
+ * Falls back to localhost in development; throws in production to prevent
+ * QR codes from being printed with a stale localhost URL on a fresh deploy
+ * where the env var was forgotten. Trailing slashes are stripped.
  */
 function getAppUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_APP_URL ?? DEFAULT_APP_URL;
+  const raw = process.env.NEXT_PUBLIC_APP_URL;
+  if (!raw) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "NEXT_PUBLIC_APP_URL must be set in production. " +
+          "Configure it in Vercel → Settings → Environment Variables.",
+      );
+    }
+    return "http://localhost:3000";
+  }
   return raw.replace(/\/+$/, "");
 }
 
@@ -43,11 +52,7 @@ const COMMON_OPTS = {
  * The output is pure black on transparent; wrap in white when printing.
  */
 export async function qrToSvgString(qrCode: string): Promise<string> {
-  return QRCode.toString(buildQrUrl(qrCode), {
-    ...COMMON_OPTS,
-    type: "svg",
-    color: { dark: "#000000", light: "#0000" },
-  });
+  return qrToSvgStringFromUrl(buildQrUrl(qrCode));
 }
 
 /**
@@ -55,7 +60,24 @@ export async function qrToSvgString(qrCode: string): Promise<string> {
  * Width 600px gives ~150px/cm at the 4×4 cm target, which prints crisp.
  */
 export async function qrToPngDataUrl(qrCode: string): Promise<string> {
-  return QRCode.toDataURL(buildQrUrl(qrCode), {
+  return qrToPngDataUrlFromUrl(buildQrUrl(qrCode));
+}
+
+/**
+ * Same as qrToSvgString but for an arbitrary URL — used by the non-SKU
+ * print pages (e.g. the panel login QR) that encode a fixed URL rather
+ * than the `/s/{qr_code}` SKU lookup path.
+ */
+export async function qrToSvgStringFromUrl(url: string): Promise<string> {
+  return QRCode.toString(url, {
+    ...COMMON_OPTS,
+    type: "svg",
+    color: { dark: "#000000", light: "#0000" },
+  });
+}
+
+export async function qrToPngDataUrlFromUrl(url: string): Promise<string> {
+  return QRCode.toDataURL(url, {
     ...COMMON_OPTS,
     width: 600,
     color: { dark: "#000000", light: "#FFFFFF" },

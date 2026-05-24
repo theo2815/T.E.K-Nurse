@@ -6,7 +6,6 @@ const PUBLIC_PATHS = [
   "/signup",
   "/forgot-password",
   "/reset-password",
-  "/design-system",
   // /s/* is the QR short-URL redirector. The page itself handles auth so it
   // can preserve the scanned QR through login via ?next=.
   "/s",

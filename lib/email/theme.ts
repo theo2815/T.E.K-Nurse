@@ -38,12 +38,22 @@ export const fonts = {
 /**
  * Resolve the public-facing app base URL for absolute links inside emails.
  * Strips a trailing slash so callers can do `${appUrl()}/student/...` safely.
+ * Falls back to localhost in development; throws in production to prevent
+ * emails from being sent with broken or stale links on a fresh deploy where
+ * the env var was forgotten.
  */
 export function appUrl(): string {
   const raw =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "https://teknurse.vercel.app";
+    process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL;
+  if (!raw) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "NEXT_PUBLIC_APP_URL must be set in production. " +
+          "Configure it in Vercel → Settings → Environment Variables.",
+      );
+    }
+    return "http://localhost:3000";
+  }
   return raw.replace(/\/+$/, "");
 }
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Printer, Download, Check } from "lucide-react";
-import { qrToPngDataUrl } from "@/lib/qr/generate";
+import { qrToPngDataUrl, qrToPngDataUrlFromUrl } from "@/lib/qr/generate";
 
 /**
  * Screen-only toolbar for the print pages. Hidden during print via
@@ -26,7 +26,10 @@ export function PrintToolbar({
   backLabel: string;
   title: string;
   subtitle?: string;
-  downloadable: { qrCode: string } | null;
+  downloadable:
+    | { qrCode: string }
+    | { url: string; filename: string }
+    | null;
 }) {
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
@@ -35,10 +38,18 @@ export function PrintToolbar({
     if (!downloadable) return;
     setDownloading(true);
     try {
-      const dataUrl = await qrToPngDataUrl(downloadable.qrCode);
+      let dataUrl: string;
+      let filename: string;
+      if ("qrCode" in downloadable) {
+        dataUrl = await qrToPngDataUrl(downloadable.qrCode);
+        filename = `tek-nurse-qr-${downloadable.qrCode}.png`;
+      } else {
+        dataUrl = await qrToPngDataUrlFromUrl(downloadable.url);
+        filename = downloadable.filename;
+      }
       const link = document.createElement("a");
       link.href = dataUrl;
-      link.download = `tek-nurse-qr-${downloadable.qrCode}.png`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

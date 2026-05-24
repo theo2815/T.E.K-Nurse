@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useProgressRouter } from "@/lib/use-progress-router";
+import { showNavSplash } from "@/lib/nav-splash";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { SpeedLines } from "@/components/SpeedLines";
@@ -125,7 +126,11 @@ function LoginForm() {
       return;
     }
 
-    // Middleware will route by role on next request.
+    // Splash up BEFORE the navigation begins so the user never sees an
+    // empty body during the segment swap + destination layout's data fetch.
+    // Hidden automatically by <NavigationSplash /> when the destination URL
+    // commits. Middleware will route by role on next request.
+    showNavSplash();
     router.replace(next);
     router.refresh();
   }

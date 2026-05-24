@@ -46,9 +46,6 @@ export default function AuthLayout({
               <span className="font-display italic font-extrabold text-[16px] tracking-[0.03em] text-mist">
                 T.E.K <span className="text-teal">NURSE</span>
               </span>
-              <span className="hidden sm:inline font-mono text-[11px] text-cyan/70 tracking-[0.08em]">
-                v0.2
-              </span>
             </div>
           </div>
 
@@ -154,12 +151,12 @@ export default function AuthLayout({
             </ul>
           </div>
 
-          {/* Bottom: version / phase stamp */}
+          {/* Bottom: institutional stamp */}
           <div
             aria-hidden
             className="relative z-10 font-mono uppercase text-[12px] text-cyan/60 tracking-[0.15em] font-semibold"
           >
-            v0.2 · phase 2 · auth + shell · cit.edu
+            CIT.EDU · SCHOOL OF NURSING LAB
           </div>
         </aside>
 

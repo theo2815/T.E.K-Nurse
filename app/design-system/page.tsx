@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Bell, ChevronRight, FileText } from "lucide-react";
 import { Card } from "@/components/ui/Card";
@@ -40,6 +41,10 @@ const CHIPS: Chip[] = [
 ];
 
 export default function Showcase() {
+  if (process.env.NODE_ENV !== "development") {
+    notFound();
+  }
+
   const [chip, setChip] = useState("all");
 
   return (

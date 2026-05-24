@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useProgressRouter } from "@/lib/use-progress-router";
+import { showNavSplash } from "@/lib/nav-splash";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { SpeedLines } from "@/components/SpeedLines";
@@ -119,6 +120,7 @@ export default function AcceptInvitePage() {
       return;
     }
 
+    showNavSplash();
     router.replace("/staff/home");
     router.refresh();
   }

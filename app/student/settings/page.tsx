@@ -31,7 +31,7 @@ export default async function StudentSettingsPage() {
   const pausedState = await getMyPausedState();
 
   return (
-    <div className="mx-auto max-w-3xl px-6 md:px-12 py-12 md:py-16 flex flex-col gap-10 pb-32 md:pb-32">
+    <div className="mx-auto max-w-3xl px-6 md:px-12 py-12 md:py-16 flex flex-col gap-10 pb-[calc(env(safe-area-inset-bottom,0px)+160px)] md:pb-32">
       <header>
         <div className="flex items-center gap-3 mb-2">
           <SpeedLines className="w-12 h-5" />
