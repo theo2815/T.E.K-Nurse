@@ -142,8 +142,8 @@ export function StudentsTable({ rows }: { rows: StudentRosterRow[] }) {
       rows={rows}
       columns={columns}
       rowKey={(r) => r.id}
-      emptyTitle="No students match"
-      emptyHint="Try a different search, or clear it to see everyone."
+      emptyTitle="No matches."
+      emptyHint="Try a different search, or clear the filter to see everyone."
     />
   );
 }

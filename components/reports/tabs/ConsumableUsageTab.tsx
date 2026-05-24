@@ -156,8 +156,8 @@ export async function ConsumableUsageTab({
         rows={report.rows}
         columns={columns}
         rowKey={(r) => r.id}
-        emptyTitle="No usage in this range"
-        emptyHint="Adjust the date range or clear filters to see more."
+        emptyTitle="No usage in range."
+        emptyHint="Adjust dates, or clear filters."
       />
 
       {report.total > 0 && (

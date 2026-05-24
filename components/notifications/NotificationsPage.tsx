@@ -53,12 +53,11 @@ function EmptyState() {
       <div className="w-12 h-12 rounded-full bg-rule/30 flex items-center justify-center mb-4">
         <Bell size={20} strokeWidth={1.5} className="text-slate" />
       </div>
-      <p className="font-mono uppercase text-[11px] tracking-[0.1em] text-slate">
-        No notifications yet
+      <p className="font-display italic font-extrabold text-[22px] text-navy">
+        No notifications yet.
       </p>
-      <p className="text-[14px] text-slate/70 mt-2 max-w-md">
-        Updates about your borrows, returns, requests, and important lab events
-        will appear here.
+      <p className="text-[15px] text-slate mt-2 max-w-md">
+        Updates about loans, requests, and lab events appear here.
       </p>
     </div>
   );

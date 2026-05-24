@@ -30,14 +30,14 @@ export function render(p: StaffInvitePayload["payload"]) {
       </CtaRow>
 
       <Paragraph>
-        Once you accept, you'll land on the staff home screen. You'll be
+        Once you accept, you&rsquo;ll land on the staff home screen. You&rsquo;ll be
         able to approve borrow and consumable requests, scan equipment at
         pickup and return, manage inventory, and read reports. Your staff
         ID is already assigned and will appear on your profile.
       </Paragraph>
 
       <Paragraph>
-        If you weren't expecting this email, you can ignore it — the
+        If you weren&rsquo;t expecting this email, you can ignore it — the
         invite is harmless without your password.
       </Paragraph>
     </EmailLayout>

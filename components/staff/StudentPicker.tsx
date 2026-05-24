@@ -24,7 +24,9 @@ export function StudentPicker({
   locked,
 }: Props) {
   const id = useId();
+  const listboxId = `${id}-listbox`;
   const errorId = error ? `${id}-error` : undefined;
+  const optionId = (idx: number) => `${id}-opt-${idx}`;
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<StudentSearchRow[]>([]);
@@ -190,6 +192,13 @@ export function StudentPicker({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKey}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={open && results.length > 0}
+          aria-controls={listboxId}
+          aria-activedescendant={
+            open && results.length > 0 ? optionId(activeIdx) : undefined
+          }
           aria-describedby={errorId}
           placeholder="Search by name or email"
           className={[
@@ -224,13 +233,19 @@ export function StudentPicker({
               </div>
             )}
             {!loading && results.length > 0 && (
-              <ul role="listbox" aria-label="Student matches">
+              <ul id={listboxId} role="listbox" aria-label="Student matches">
                 {results.map((r, i) => {
                   const active = i === activeIdx;
                   return (
-                    <li key={r.id} role="option" aria-selected={active}>
+                    <li
+                      key={r.id}
+                      id={optionId(i)}
+                      role="option"
+                      aria-selected={active}
+                    >
                       <button
                         type="button"
+                        tabIndex={-1}
                         onClick={() => pick(r)}
                         onMouseEnter={() => setActiveIdx(i)}
                         className={[

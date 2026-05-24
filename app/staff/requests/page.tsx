@@ -80,8 +80,8 @@ function emptyHint(stage: QueueStage, type: QueueType): string {
   }
   if (type === "all") return "No approved requests are awaiting pickup.";
   if (type === "equipment")
-    return "No approved equipment requests are awaiting pickup.";
-  return "No approved consumable requests are awaiting pickup.";
+    return "No approved equipment requests awaiting pickup.";
+  return "No approved consumable requests awaiting pickup.";
 }
 
 export default async function StaffRequestsPage({
@@ -167,7 +167,7 @@ export default async function StaffRequestsPage({
 
       {rows.length === 0 ? (
         <EmptyState
-          title={stage === "pending" ? "Queue clear" : "Nothing awaiting"}
+          title={stage === "pending" ? "Queue clear." : "Nothing awaiting pickup."}
           hint={emptyHint(stage, type)}
         />
       ) : stage === "pending" ? (

@@ -35,8 +35,6 @@ export default async function PrintLayout({
 
   return (
     <div className="min-h-screen bg-mist print:bg-white">
-      {/* Inline print rules: zero @page margins so the sheet's own padding
-          owns the printable border; remove screen scrollbars in print */}
       <style>{`
         @media print {
           @page { size: A4; margin: 0; }
@@ -46,7 +44,7 @@ export default async function PrintLayout({
           }
         }
       `}</style>
-      {children}
+      <main>{children}</main>
     </div>
   );
 }

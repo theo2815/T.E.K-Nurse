@@ -10,6 +10,13 @@ export type EditProfileState = {
 
 const MAX_NAME_LEN = 120;
 
+function friendlyError(message: string): string {
+  if (/permission denied|insufficient_privilege/i.test(message)) {
+    return "You don't have permission to update this profile.";
+  }
+  return "Couldn't save profile changes. Try again.";
+}
+
 /**
  * Student self-update. Only `full_name` is editable from the settings page —
  * email is tied to sign-in, and `student_id` is the institutional handle set
@@ -45,7 +52,7 @@ export async function updateMyProfile(
     .eq("id", user.id)
     .eq("role", "student");
 
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error.message) };
 
   revalidatePath("/student/profile");
   revalidatePath("/student/settings");

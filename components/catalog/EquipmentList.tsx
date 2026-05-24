@@ -28,19 +28,19 @@ export function EquipmentList({
       return onToggle ? (
         <EmptyState
           title="No equipment yet."
-          hint="Use the New SKU button above to add your first one."
+          hint="Add your first SKU from the toolbar above."
         />
       ) : (
         <EmptyState
-          title="No equipment available yet."
-          hint="Items will appear here once staff has added them to the catalog."
+          title="Catalog is empty."
+          hint="Equipment will appear here once staff adds it."
         />
       );
     }
     return (
       <EmptyState
-        title="No equipment matches."
-        hint="Try clearing the filter or your search term."
+        title="No matches."
+        hint="Try a different search, or clear the filter."
       />
     );
   }

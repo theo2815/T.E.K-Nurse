@@ -210,8 +210,16 @@ async function PendingTab() {
   if (rows.length === 0) {
     return (
       <EmptyState
-        title="No pending requests"
-        hint="Submit a request from the Equipment or Consumables catalog."
+        title="No pending requests."
+        hint="Submit one from the equipment or consumables catalog."
+        cta={
+          <Link
+            href="/student/equipment"
+            className="font-mono uppercase text-caps-sm tracking-[0.1em] text-teal-deep underline underline-offset-4 decoration-teal decoration-2 hover:text-navy transition-colors"
+          >
+            Browse equipment →
+          </Link>
+        }
       />
     );
   }
@@ -233,8 +241,8 @@ async function ApprovedTab() {
   if (rows.length === 0) {
     return (
       <EmptyState
-        title="Nothing approved yet"
-        hint="When staff approves a request, it shows here with the pickup code window."
+        title="Nothing approved yet."
+        hint="Approved requests appear here with their pickup window."
       />
     );
   }
@@ -256,8 +264,8 @@ async function ActiveTab() {
   if (rows.length === 0) {
     return (
       <EmptyState
-        title="Nothing borrowed"
-        hint="When staff approves a borrow, it appears here with its due date."
+        title="Nothing borrowed."
+        hint="Active borrows appear here with their due date."
       />
     );
   }
@@ -318,8 +326,16 @@ async function PastTab() {
   if (rows.length === 0) {
     return (
       <EmptyState
-        title="No past requests"
-        hint="Terminal requests (approved, expired, cancelled) will land here."
+        title="No past requests."
+        hint="Closed requests (approved, expired, cancelled) land here."
+        cta={
+          <Link
+            href="/student/history"
+            className="font-mono uppercase text-caps-sm tracking-[0.1em] text-teal-deep underline underline-offset-4 decoration-teal decoration-2 hover:text-navy transition-colors"
+          >
+            Full history →
+          </Link>
+        }
       />
     );
   }

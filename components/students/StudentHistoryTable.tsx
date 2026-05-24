@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Package, Beaker } from "lucide-react";
 import type { StudentHistoryItem } from "@/lib/supabase/queries/students";
@@ -33,11 +34,13 @@ export function StudentHistoryTable({
   role = "staff",
   emptyTitle,
   emptyHint,
+  emptyCta,
 }: {
   items: StudentHistoryItem[];
   role?: "staff" | "student";
   emptyTitle?: string;
   emptyHint?: string;
+  emptyCta?: ReactNode;
 }) {
   const eqBase =
     role === "student" ? "/student/equipment" : "/staff/inventory/equipment";
@@ -128,10 +131,11 @@ export function StudentHistoryTable({
       rows={items}
       columns={columns}
       rowKey={(r) => `${r.kind}:${r.id}`}
-      emptyTitle={emptyTitle ?? "No activity yet"}
+      emptyTitle={emptyTitle ?? "No activity yet."}
       emptyHint={
         emptyHint ?? "This student hasn't borrowed equipment or used consumables."
       }
+      emptyCta={emptyCta}
     />
   );
 }

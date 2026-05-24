@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ClipboardList } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -47,12 +48,12 @@ export default async function StudentHistoryPage({
         <p className="text-[15px] text-slate max-w-prose leading-relaxed">
           Every borrow you returned and every consumable you used, in one
           chronological log. Pending and approved requests live on{" "}
-          <a
+          <Link
             href="/student/requests"
             className="text-navy font-semibold underline underline-offset-2 decoration-teal decoration-2 hover:text-teal-deep transition-colors"
           >
             Requests
-          </a>
+          </Link>
           .
         </p>
       </header>
@@ -85,8 +86,16 @@ export default async function StudentHistoryPage({
         <StudentHistoryTable
           items={historyPage.rows}
           role="student"
-          emptyTitle="No activity yet"
-          emptyHint="When you borrow equipment or use consumables, every event lands here."
+          emptyTitle="No activity yet."
+          emptyHint="When you borrow equipment or use a consumable, every event lands here."
+          emptyCta={
+            <Link
+              href="/student/equipment"
+              className="font-mono uppercase text-caps-sm tracking-[0.1em] text-teal-deep underline underline-offset-4 decoration-teal decoration-2 hover:text-navy transition-colors"
+            >
+              Browse catalog →
+            </Link>
+          }
         />
 
         {historyPage.total > historyPage.pageSize && (

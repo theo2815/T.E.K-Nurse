@@ -26,19 +26,19 @@ export function ConsumableList({
       return onToggle ? (
         <EmptyState
           title="No consumables yet."
-          hint="Use the New SKU button above to add your first one."
+          hint="Add your first SKU from the toolbar above."
         />
       ) : (
         <EmptyState
-          title="No consumables available yet."
-          hint="Supplies will appear here once staff has added them to the catalog."
+          title="Catalog is empty."
+          hint="Supplies will appear here once staff adds them."
         />
       );
     }
     return (
       <EmptyState
-        title="No consumables match."
-        hint="Try clearing the filter or your search term."
+        title="No matches."
+        hint="Try a different search, or clear the filter."
       />
     );
   }

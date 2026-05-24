@@ -27,7 +27,10 @@ export async function checkEmailAvailable(
   });
 
   if (error) {
-    return { ok: false, error: error.message };
+    return {
+      ok: false,
+      error: "Couldn't check email availability. Try again.",
+    };
   }
   return { ok: true, available: Boolean(data) };
 }

@@ -272,8 +272,8 @@ export async function LowStockTab() {
           rows={report.equipment}
           columns={equipmentColumns}
           rowKey={(r) => r.id}
-          emptyTitle="No equipment below threshold"
-          emptyHint="All SKUs have at least their low_stock_threshold available."
+          emptyTitle="Stock is healthy."
+          emptyHint="All equipment SKUs are at or above their low-stock threshold."
         />
       </section>
 
@@ -288,8 +288,8 @@ export async function LowStockTab() {
           rows={report.consumables}
           columns={consumableColumns}
           rowKey={(r) => r.id}
-          emptyTitle="No consumables below threshold"
-          emptyHint="Every consumable SKU has at least its low_stock_threshold across active lots."
+          emptyTitle="Stock is healthy."
+          emptyHint="Every consumable SKU is at or above its low-stock threshold."
         />
       </section>
 
@@ -304,7 +304,7 @@ export async function LowStockTab() {
           rows={report.expiring}
           columns={expiringColumns}
           rowKey={(r) => r.id}
-          emptyTitle="No lots expiring soon"
+          emptyTitle="Nothing expiring soon."
           emptyHint="Every active lot is outside its warning window."
         />
       </section>

@@ -107,7 +107,7 @@ export function InviteStaffModal({ open, onClose }: Props) {
       <div className="flex flex-col gap-5">
         <p className="text-[14px] text-slate leading-relaxed">
           The invitee receives an email with a one-time link to set their
-          password. They'll appear in the table as <strong>Pending</strong>{" "}
+          password. They&rsquo;ll appear in the table as <strong>Pending</strong>{" "}
           until they accept. Their TEK-NNN is assigned now.
         </p>
 
@@ -144,8 +144,8 @@ export function InviteStaffModal({ open, onClose }: Props) {
             className="text-teal-deep shrink-0 mt-0.5"
           />
           <p className="text-[14px] text-slate leading-relaxed">
-            We'll send the invite from the T.E.K Nurse address. If the link
-            isn't received, you can resend from the table later.
+            We&rsquo;ll send the invite from the T.E.K Nurse address. If the link
+            isn&rsquo;t received, you can resend from the table later.
           </p>
         </div>
 

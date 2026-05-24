@@ -53,7 +53,7 @@ export default function AuthLayout({
           </div>
 
           {/* Screen area */}
-          <div
+          <main
             className="p-8 relative"
             style={{
               backgroundColor: "var(--color-paper)",
@@ -68,7 +68,7 @@ export default function AuthLayout({
             }}
           >
             {children}
-          </div>
+          </main>
 
           {/* Bottom chrome */}
           <div

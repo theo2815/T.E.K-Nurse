@@ -285,7 +285,7 @@ export default function SignupPage() {
 
       <p className="text-[14px] text-slate leading-relaxed mb-8">
         Students only. Staff and admin accounts are invited by an admin —
-        if you're staff, ask your admin to send you an invite.
+        if you&rsquo;re staff, ask your admin to send you an invite.
       </p>
 
       <p className="text-slate text-[14px] mb-6">

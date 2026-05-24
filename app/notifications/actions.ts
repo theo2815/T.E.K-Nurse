@@ -14,6 +14,13 @@ function revalidateNotificationSurfaces() {
   revalidatePath("/", "layout");
 }
 
+function friendlyError(message: string): string {
+  if (/permission denied|insufficient_privilege/i.test(message)) {
+    return "You don't have access to that notification.";
+  }
+  return "Couldn't update notification. Try again.";
+}
+
 export async function markNotificationRead(input: {
   id: string;
 }): Promise<Result> {
@@ -31,7 +38,7 @@ export async function markNotificationRead(input: {
     .select("id")
     .maybeSingle();
 
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: friendlyError(error.message) };
   if (!data) {
     return {
       ok: false,
@@ -59,7 +66,7 @@ export async function markAllNotificationsRead(): Promise<
     .eq("is_read", false)
     .select("id");
 
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: friendlyError(error.message) };
 
   revalidateNotificationSurfaces();
   return { ok: true, markedCount: data?.length ?? 0 };

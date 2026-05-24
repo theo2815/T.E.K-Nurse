@@ -201,7 +201,7 @@ export async function OverdueLostTab({
         rows={report.rows}
         columns={columns}
         rowKey={(r) => r.id}
-        emptyTitle="Nothing overdue or lost"
+        emptyTitle="Nothing overdue or lost."
         emptyHint="All borrows are within their return window."
       />
 

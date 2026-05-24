@@ -4,6 +4,7 @@
  * row dividers, empty state, and the responsive container.
  */
 
+import type { ReactNode } from "react";
 import { Inbox } from "lucide-react";
 
 export type ColumnDef<T> = {
@@ -25,12 +26,14 @@ export function ReportsTable<T>({
   rowKey,
   emptyTitle,
   emptyHint,
+  emptyCta,
 }: {
   rows: T[];
   columns: ColumnDef<T>[];
   rowKey: (row: T) => string;
   emptyTitle: string;
   emptyHint?: string;
+  emptyCta?: ReactNode;
 }) {
   if (rows.length === 0) {
     return (
@@ -47,6 +50,7 @@ export function ReportsTable<T>({
         {emptyHint && (
           <p className="mt-1 text-[14px] text-slate">{emptyHint}</p>
         )}
+        {emptyCta && <div className="mt-4">{emptyCta}</div>}
       </div>
     );
   }

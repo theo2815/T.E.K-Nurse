@@ -120,8 +120,8 @@ export function CancelInviteModal({ open, onClose, user }: Props) {
           />
           <p className="text-[14px] text-slate leading-relaxed">
             The invite link becomes invalid immediately. The reserved TEK-NNN
-            won't be reused — a fresh invite gets the next number. If you
-            want to invite this person again later, you'll need to send a
+            won&rsquo;t be reused — a fresh invite gets the next number. If you
+            want to invite this person again later, you&rsquo;ll need to send a
             new invite.
           </p>
         </div>

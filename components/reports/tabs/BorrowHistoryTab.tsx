@@ -236,8 +236,8 @@ export async function BorrowHistoryTab({
         rows={report.rows}
         columns={columns}
         rowKey={(r) => r.id}
-        emptyTitle="No borrows in this range"
-        emptyHint="Adjust the date range or clear filters to see more."
+        emptyTitle="No borrows in range."
+        emptyHint="Adjust dates, or clear filters."
       />
 
       {report.total > 0 && (

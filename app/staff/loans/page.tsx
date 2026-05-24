@@ -74,10 +74,10 @@ export default async function StaffLoansPage({
 
       {rows.length === 0 ? (
         <EmptyState
-          title={stage === "active" ? "All items in" : "Nothing overdue"}
+          title={stage === "active" ? "No active loans." : "Nothing overdue."}
           hint={
             stage === "active"
-              ? "No equipment is currently checked out."
+              ? undefined
               : "All active loans are within their return window."
           }
         />

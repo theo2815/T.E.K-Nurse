@@ -2,8 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
-  Package,
-  Beaker,
   CheckCircle2,
   User as UserIcon,
   Mail,
@@ -94,7 +92,6 @@ export default async function StaffRequestDetailPage({
   const req = await getPendingRequestById({ id, type });
   if (!req) notFound();
 
-  const TypeIcon = req.type === "equipment" ? Package : Beaker;
   const eyebrow =
     req.type === "equipment" ? "EQUIPMENT · REQUEST" : "CONSUMABLE · REQUEST";
   const statusLabel = STATUS_LABEL[req.status];

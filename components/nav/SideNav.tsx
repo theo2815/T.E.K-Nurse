@@ -24,7 +24,7 @@ export function SideNav({
   );
 
   return (
-    <aside
+    <nav
       aria-label="Primary"
       className="hidden md:flex flex-col fixed left-0 top-20 bottom-0 w-64 bg-paper border-r border-rule px-4 py-8"
     >
@@ -71,7 +71,7 @@ export function SideNav({
           </div>
         </div>
       )}
-    </aside>
+    </nav>
   );
 }
 

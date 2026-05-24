@@ -1,12 +1,15 @@
+import type { ReactNode } from "react";
 import { Inbox } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 
 export function EmptyState({
   title = "Nothing here yet.",
   hint,
+  cta,
 }: {
   title?: string;
   hint?: string;
+  cta?: ReactNode;
 }) {
   return (
     <Card>
@@ -19,6 +22,7 @@ export function EmptyState({
         {hint && (
           <p className="mt-2 text-[15px] text-slate max-w-sm">{hint}</p>
         )}
+        {cta && <div className="mt-5">{cta}</div>}
       </div>
     </Card>
   );

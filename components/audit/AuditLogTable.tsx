@@ -38,10 +38,10 @@ export function AuditLogTable({
           className="mx-auto text-slate/40"
         />
         <p className="mt-4 font-display italic font-extrabold text-[18px] text-navy">
-          No audit events in range
+          No events in range.
         </p>
         <p className="mt-1 text-[14px] text-slate">
-          Try widening the date range or clearing filters.
+          Widen the date range, or clear filters.
         </p>
       </div>
     );

@@ -40,7 +40,9 @@ export async function resolveScanTargetAction(
     const data = await getScanTarget(qr);
     return { ok: true, data };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Resolve failed.";
-    return { ok: false, error: msg };
+    // Log server-side so query-level failures stay debuggable, but return
+    // friendly text to the client so raw PostgrestError shape doesn't leak.
+    console.error("[scan] resolveScanTargetAction failed:", err);
+    return { ok: false, error: "Couldn't load item details. Try again." };
   }
 }

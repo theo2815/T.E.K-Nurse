@@ -10,6 +10,13 @@ export type EditProfileState = {
 
 const MAX_NAME_LEN = 120;
 
+function friendlyError(message: string): string {
+  if (/permission denied|insufficient_privilege/i.test(message)) {
+    return "You don't have permission to update this profile.";
+  }
+  return "Couldn't save profile changes. Try again.";
+}
+
 /**
  * Staff (and admin) self-update. Only `full_name` is editable — email is
  * tied to sign-in, role flips go through the Admin Manage Users surface
@@ -41,7 +48,7 @@ export async function updateMyProfile(
     .eq("id", user.id)
     .in("role", ["staff", "admin"]);
 
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error.message) };
 
   revalidatePath("/staff/profile");
   revalidatePath("/staff/settings");
