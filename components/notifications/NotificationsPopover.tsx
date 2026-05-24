@@ -143,7 +143,7 @@ export function NotificationsPopover({
             No notifications yet
           </p>
           <p className="text-[13px] text-slate/70 mt-2">
-            Updates about your borrows, returns, and requests will appear here.
+            Updates about loans, requests, and lab events appear here.
           </p>
         </div>
       ) : (

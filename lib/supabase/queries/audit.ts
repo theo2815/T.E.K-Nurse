@@ -482,7 +482,7 @@ export type AuditActorOption = {
   id: string;
   full_name: string;
   email: string | null;
-  role: "staff" | "student" | "system";
+  role: "staff" | "admin" | "student" | "system";
 };
 
 export const SYSTEM_ACTOR: AuditActorOption = {
@@ -510,7 +510,7 @@ export async function searchActors(q: string): Promise<AuditActorOption[]> {
     const { data } = await supabase
       .from("users")
       .select("id, full_name, email, role")
-      .eq("role", "staff")
+      .in("role", ["staff", "admin"])
       .order("full_name", { ascending: true })
       .limit(8);
     const staffRows = ((data ?? []) as AuditActorOption[]).map((r) => ({
