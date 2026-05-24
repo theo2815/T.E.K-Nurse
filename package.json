@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "email:drain": "node scripts/drain.mjs",
-    "cron:poke": "node scripts/cron-poke.mjs"
+    "cron:poke": "node scripts/cron-poke.mjs",
+    "icons:generate": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@react-email/components": "^1.0.12",

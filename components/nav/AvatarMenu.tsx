@@ -14,6 +14,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { InstallAppItem } from "@/components/pwa/InstallAppItem";
+import { IosInstallModal } from "@/components/pwa/IosInstallModal";
 
 type NavLink = {
   label: string;
@@ -56,6 +58,7 @@ export function AvatarMenu({
   const links = rawLinks.filter((l) => !l.adminOnly || isAdmin);
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [iosInstallOpen, setIosInstallOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useProgressRouter();
 
@@ -123,6 +126,11 @@ export function AvatarMenu({
                 </Link>
               );
             })}
+            <InstallAppItem
+              className={rowClass}
+              onSelect={() => setOpen(false)}
+              onIosRequest={() => setIosInstallOpen(true)}
+            />
           </nav>
 
           <hr className="my-4" />
@@ -139,6 +147,11 @@ export function AvatarMenu({
           </button>
         </div>
       )}
+
+      <IosInstallModal
+        open={iosInstallOpen}
+        onClose={() => setIosInstallOpen(false)}
+      />
     </div>
   );
 }
