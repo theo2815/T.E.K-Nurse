@@ -31,16 +31,24 @@ export default async function PrintLayout({
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile || profile.role !== "staff") redirect("/student/home");
+  if (!profile || (profile.role !== "staff" && profile.role !== "admin")) {
+    redirect("/student/home");
+  }
 
   return (
-    <div className="min-h-screen bg-mist print:bg-white">
+    <div
+      className="pwa-safe-area-shell min-h-screen bg-mist print:bg-white"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
       <style>{`
         @media print {
           @page { size: A4; margin: 0; }
           html, body {
             background: #FFFFFF !important;
             background-image: none !important;
+          }
+          .pwa-safe-area-shell {
+            padding-top: 0 !important;
           }
         }
       `}</style>

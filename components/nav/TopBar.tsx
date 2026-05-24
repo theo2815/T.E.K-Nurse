@@ -34,7 +34,13 @@ export function TopBar({
     .toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 h-20 bg-mist/95 backdrop-blur-sm border-b border-rule flex items-center justify-between px-4 md:px-8">
+    <header
+      className="sticky top-0 z-30 bg-mist/95 backdrop-blur-sm border-b border-rule flex items-center justify-between px-4 md:px-8 h-20"
+      style={{
+        paddingTop: "env(safe-area-inset-top, 0px)",
+        height: "calc(5rem + env(safe-area-inset-top, 0px))",
+      }}
+    >
       <Link
         href={homeHref}
         className="flex items-center gap-3"

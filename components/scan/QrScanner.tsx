@@ -149,6 +149,21 @@ export function QrScanner({ onResolve, paused }: Props) {
     setState({ kind: "starting" });
     lockRef.current = false;
     try {
+      // iOS WebViews and HTTP origins leave navigator.mediaDevices undefined.
+      // Pre-check so we surface a real explanation instead of a cryptic
+      // "cannot read property enumerateDevices of undefined" from html5-qrcode.
+      if (
+        typeof navigator === "undefined" ||
+        !navigator.mediaDevices?.enumerateDevices
+      ) {
+        setState({
+          kind: "error",
+          message:
+            "This browser doesn't expose camera APIs. Open T.E.K Nurse in Safari or Chrome over HTTPS, or use Find item below.",
+        });
+        return;
+      }
+
       const mod = await import("html5-qrcode");
       const { Html5Qrcode, Html5QrcodeSupportedFormats } = mod;
 
@@ -209,6 +224,27 @@ export function QrScanner({ onResolve, paused }: Props) {
           /* per-frame decode errors are normal — swallow */
         },
       );
+
+      // iOS PWA hardening: html5-qrcode binds the MediaStream but the standalone
+      // WebView often leaves the <video> in a paused/black state. Force the
+      // inline-playback attributes (both the modern and legacy webkit forms) and
+      // call .play() explicitly so the camera surface actually shows the feed.
+      const video = document
+        .getElementById(CONTAINER_ID)
+        ?.querySelector("video");
+      if (video) {
+        video.setAttribute("playsinline", "true");
+        video.setAttribute("webkit-playsinline", "true");
+        video.setAttribute("autoplay", "true");
+        video.setAttribute("muted", "true");
+        video.muted = true; // iOS requires both the attribute and the property
+        try {
+          await video.play();
+        } catch {
+          /* Some iOS builds auto-play and reject the redundant .play() — the
+             stream is already live, so this rejection is safe to swallow. */
+        }
+      }
 
       setState({ kind: "scanning" });
     } catch (err) {
@@ -332,8 +368,14 @@ export function QrScanner({ onResolve, paused }: Props) {
                   To enable:
                 </p>
                 <p>
-                  <span className="text-white font-bold">iPhone:</span> Settings
-                  → Safari → Camera → Allow
+                  <span className="text-white font-bold">iPhone (Safari):</span>{" "}
+                  Settings → Safari → Camera → Allow
+                </p>
+                <p className="mt-1">
+                  <span className="text-white font-bold">
+                    iPhone (installed app):
+                  </span>{" "}
+                  Settings → T.E.K Nurse → Camera → Allow
                 </p>
                 <p className="mt-1">
                   <span className="text-white font-bold">Android:</span> tap the

@@ -124,9 +124,12 @@ export function BatchPicker({
               </p>
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
+            {/* Action panel — mobile reshapes the desktop chip-on-the-right
+                into a full-bleed CTA so Print is the obvious primary action
+                with a 48px tap target. Desktop keeps the inline arrangement. */}
+            <div className="flex flex-col md:flex-row md:items-center gap-3">
               <span className="font-mono uppercase text-caps-sm text-slate tracking-[0.1em]">
-                <span className="font-display italic font-extrabold text-navy text-[24px] not-italic-not align-baseline">
+                <span className="font-display italic font-extrabold text-navy text-[24px] align-baseline">
                   {selected.size}
                 </span>{" "}
                 selected
@@ -135,7 +138,7 @@ export function BatchPicker({
                 type="button"
                 onClick={() => window.print()}
                 disabled={selected.size === 0}
-                className="inline-flex items-center justify-center gap-2 bg-teal text-white font-mono uppercase text-[15px] tracking-[0.12em] font-bold px-6 py-3 rounded transition-colors hover:bg-teal-deep active:bg-navy-deep disabled:opacity-40 disabled:pointer-events-none"
+                className="inline-flex items-center justify-center gap-2 bg-teal text-white font-mono uppercase text-[15px] tracking-[0.12em] font-bold w-full md:w-auto px-6 py-3 rounded transition-colors hover:bg-teal-deep active:bg-navy-deep disabled:opacity-40 disabled:pointer-events-none"
               >
                 <Printer size={16} strokeWidth={2} />
                 Print sheet
@@ -144,30 +147,37 @@ export function BatchPicker({
           </div>
         </div>
 
-        {/* Tab bar */}
+        {/* Tab bar — wraps in overflow-x-auto so mono-caps labels don't
+            force the page to scroll horizontally on a 375px viewport. The
+            -mx-6 / px-6 pair lets the scroll edges bleed to the page gutter
+            instead of cropping inside the max-w container. */}
         <div className="border-b border-rule">
-          <div className="mx-auto max-w-5xl px-6 md:px-10 flex items-end gap-1">
-            <TabButton
-              active={tab === "equipment"}
-              onClick={() => setTab("equipment")}
-              icon={<Wrench size={14} strokeWidth={1.75} />}
-              label="Equipment"
-              count={equipmentCount}
-            />
-            <TabButton
-              active={tab === "consumables"}
-              onClick={() => setTab("consumables")}
-              icon={<Beaker size={14} strokeWidth={1.75} />}
-              label="Consumables"
-              count={consumableCount}
-            />
-            <TabButton
-              active={tab === "selected"}
-              onClick={() => setTab("selected")}
-              icon={<CheckSquare size={14} strokeWidth={1.75} />}
-              label="Selected"
-              count={selected.size}
-            />
+          <div className="mx-auto max-w-5xl px-6 md:px-10">
+            <div className="-mx-6 md:mx-0 overflow-x-auto">
+              <div className="flex items-end gap-1 px-6 md:px-0 min-w-max">
+                <TabButton
+                  active={tab === "equipment"}
+                  onClick={() => setTab("equipment")}
+                  icon={<Wrench size={14} strokeWidth={1.75} />}
+                  label="Equipment"
+                  count={equipmentCount}
+                />
+                <TabButton
+                  active={tab === "consumables"}
+                  onClick={() => setTab("consumables")}
+                  icon={<Beaker size={14} strokeWidth={1.75} />}
+                  label="Consumables"
+                  count={consumableCount}
+                />
+                <TabButton
+                  active={tab === "selected"}
+                  onClick={() => setTab("selected")}
+                  icon={<CheckSquare size={14} strokeWidth={1.75} />}
+                  label="Selected"
+                  count={selected.size}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -230,7 +240,7 @@ export function BatchPicker({
                     <button
                       type="button"
                       onClick={() => toggle(e.qrCode)}
-                      className="w-full text-left px-4 py-3 flex items-center gap-4 hover:bg-mist/60 transition-colors"
+                      className="w-full text-left px-4 py-3.5 flex items-center gap-4 hover:bg-mist/60 transition-colors"
                     >
                       <span className="text-teal">
                         {isOn ? (
@@ -311,7 +321,7 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-4 py-3 font-mono uppercase text-caps-md tracking-[0.1em] font-semibold transition-colors border-b-2 -mb-px ${
+      className={`inline-flex items-center gap-2 px-4 py-3 font-mono uppercase text-caps-md tracking-[0.1em] font-semibold whitespace-nowrap transition-colors border-b-2 -mb-px ${
         active
           ? "text-navy border-teal"
           : "text-slate border-transparent hover:text-navy"

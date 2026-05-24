@@ -26,7 +26,8 @@ export function SideNav({
   return (
     <nav
       aria-label="Primary"
-      className="hidden md:flex flex-col fixed left-0 top-20 bottom-0 w-64 bg-paper border-r border-rule px-4 py-8"
+      className="hidden md:flex flex-col fixed left-0 bottom-0 w-64 bg-paper border-r border-rule px-4 py-8"
+      style={{ top: "calc(5rem + env(safe-area-inset-top, 0px))" }}
     >
       <ul className="flex flex-col gap-1.5 flex-1 min-h-0 overflow-y-auto">
         {navItems.map((item, idx) => (
