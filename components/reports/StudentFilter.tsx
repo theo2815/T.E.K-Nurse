@@ -131,9 +131,9 @@ export function StudentFilter({ value, basePath, searchParams }: Props) {
           <span className="text-[14px] text-navy font-semibold truncate max-w-[180px]">
             {value.full_name}
           </span>
-          {value.year_section && (
+          {value.student_id && (
             <span className="font-mono uppercase text-caps-sm text-slate tracking-[0.06em] hidden md:inline">
-              {value.year_section}
+              {value.student_id}
             </span>
           )}
           <button

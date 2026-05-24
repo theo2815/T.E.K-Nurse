@@ -278,8 +278,8 @@ function SingleBorrowSummary({ borrow }: { borrow: OpenBorrowRow }) {
       </p>
       <p className="text-[13px] text-slate font-mono mt-0.5">
         {borrow.student.email}
-        {borrow.student.year_section && (
-          <span className="ml-2 uppercase">· {borrow.student.year_section}</span>
+        {borrow.student.student_id && (
+          <span className="ml-2 uppercase">· {borrow.student.student_id}</span>
         )}
       </p>
       <p className="mt-2 font-mono uppercase text-caps-sm tracking-[0.08em] text-slate">
@@ -407,9 +407,9 @@ function BorrowRow({
           </p>
           <p className="text-[12.5px] text-slate font-mono mt-0.5 truncate">
             {borrow.student.email}
-            {borrow.student.year_section && (
+            {borrow.student.student_id && (
               <span className="ml-2 uppercase">
-                · {borrow.student.year_section}
+                · {borrow.student.student_id}
               </span>
             )}
           </p>

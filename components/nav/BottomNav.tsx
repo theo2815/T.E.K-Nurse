@@ -8,14 +8,16 @@ import { NavBadge } from "./NavBadge";
 
 export function BottomNav({
   role,
+  isAdmin = false,
   badges,
 }: {
   role: "staff" | "student";
+  isAdmin?: boolean;
   badges?: Record<string, number>;
 }) {
   const pathname = usePathname();
   const items = (role === "staff" ? STAFF_NAV : STUDENT_NAV).filter(
-    (i) => !i.desktopOnly,
+    (i) => !i.desktopOnly && (!i.adminOnly || isAdmin),
   );
 
   return (

@@ -28,7 +28,7 @@ insert into auth.users (
    'staff.nurse@cit.edu', crypt('TekNurse123!', gen_salt('bf')),
    now(), null, null,
    '{"provider":"email","providers":["email"]}',
-   '{"full_name":"Mara Lim, RN","year_section":null}',
+   '{"full_name":"Mara Lim, RN"}',
    now(), now(), '', '', '', ''),
 
   ('00000000-0000-0000-0000-000000000000',
@@ -37,7 +37,7 @@ insert into auth.users (
    'maria.cruz@cit.edu', crypt('TekNurse123!', gen_salt('bf')),
    now(), null, null,
    '{"provider":"email","providers":["email"]}',
-   '{"full_name":"Maria Cruz","year_section":"BSN 3-A"}',
+   '{"full_name":"Maria Cruz","student_id":"12-3456-789"}',
    now(), now(), '', '', '', ''),
 
   ('00000000-0000-0000-0000-000000000000',
@@ -46,7 +46,7 @@ insert into auth.users (
    'jose.santos@cit.edu', crypt('TekNurse123!', gen_salt('bf')),
    now(), null, null,
    '{"provider":"email","providers":["email"]}',
-   '{"full_name":"Jose Santos","year_section":"BSN 2-B"}',
+   '{"full_name":"Jose Santos","student_id":"12-3456-790"}',
    now(), now(), '', '', '', ''),
 
   ('00000000-0000-0000-0000-000000000000',
@@ -55,15 +55,15 @@ insert into auth.users (
    'ana.reyes@cit.edu', crypt('TekNurse123!', gen_salt('bf')),
    now(), null, null,
    '{"provider":"email","providers":["email"]}',
-   '{"full_name":"Ana Reyes","year_section":"BSN 3-A"}',
+   '{"full_name":"Ana Reyes","student_id":"12-3456-791"}',
    now(), now(), '', '', '', '')
 on conflict (id) do nothing;
 
-insert into public.users (id, email, role, full_name, year_section, is_active) values
-  ('11111111-1111-1111-1111-111111111111', 'staff.nurse@cit.edu', 'staff',  'Mara Lim, RN', null,      true),
-  ('22222222-2222-2222-2222-222222222222', 'maria.cruz@cit.edu', 'student', 'Maria Cruz',   'BSN 3-A', true),
-  ('33333333-3333-3333-3333-333333333333', 'jose.santos@cit.edu','student', 'Jose Santos',  'BSN 2-B', true),
-  ('44444444-4444-4444-4444-444444444444', 'ana.reyes@cit.edu',  'student', 'Ana Reyes',    'BSN 3-A', true)
+insert into public.users (id, email, role, full_name, student_id, staff_id, is_active) values
+  ('11111111-1111-1111-1111-111111111111', 'staff.nurse@cit.edu', 'staff',  'Mara Lim, RN', null,          'TEK-001', true),
+  ('22222222-2222-2222-2222-222222222222', 'maria.cruz@cit.edu', 'student', 'Maria Cruz',   '12-3456-789', null,      true),
+  ('33333333-3333-3333-3333-333333333333', 'jose.santos@cit.edu','student', 'Jose Santos',  '12-3456-790', null,      true),
+  ('44444444-4444-4444-4444-444444444444', 'ana.reyes@cit.edu',  'student', 'Ana Reyes',    '12-3456-791', null,      true)
 on conflict (id) do nothing;
 
 -- ============================================================================

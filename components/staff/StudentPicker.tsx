@@ -140,9 +140,9 @@ export function StudentPicker({
             </p>
             <p className="font-mono text-[12px] text-slate/80 tracking-[0.04em] truncate">
               {value.email}
-              {value.year_section && (
+              {value.student_id && (
                 <span className="ml-2 uppercase">
-                  · {value.year_section}
+                  · {value.student_id}
                 </span>
               )}
             </p>
@@ -244,9 +244,9 @@ export function StudentPicker({
                         </span>
                         <span className="font-mono text-[12px] text-slate/80 tracking-[0.04em] truncate">
                           {r.email}
-                          {r.year_section && (
+                          {r.student_id && (
                             <span className="ml-2 uppercase">
-                              · {r.year_section}
+                              · {r.student_id}
                             </span>
                           )}
                         </span>

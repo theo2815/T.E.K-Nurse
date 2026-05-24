@@ -41,7 +41,7 @@ export type StudentLabel = {
   id: string;
   full_name: string;
   email: string;
-  year_section: string | null;
+  student_id: string | null;
 };
 
 export async function getStudentLabelById(
@@ -50,7 +50,7 @@ export async function getStudentLabelById(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("users")
-    .select("id, full_name, email, year_section")
+    .select("id, full_name, email, student_id")
     .eq("id", id)
     .eq("role", "student")
     .maybeSingle();
@@ -72,8 +72,8 @@ export type DailyPoint = { date: string; value: number };
 export const DEFAULT_PAGE_SIZE = 50;
 
 type StudentJoin =
-  | { id: string; full_name: string; email: string; year_section: string | null }
-  | { id: string; full_name: string; email: string; year_section: string | null }[]
+  | { id: string; full_name: string; email: string; student_id: string | null }
+  | { id: string; full_name: string; email: string; student_id: string | null }[]
   | null;
 
 type EqSkuJoin =
@@ -90,14 +90,14 @@ type StudentLite = {
   id: string;
   full_name: string;
   email: string;
-  year_section: string | null;
+  student_id: string | null;
 };
 
 const EMPTY_STUDENT: StudentLite = {
   id: "",
   full_name: "Unknown",
   email: "",
-  year_section: null,
+  student_id: null,
 };
 
 function unwrapStudent(s: StudentJoin): StudentLite {
@@ -172,7 +172,7 @@ export async function getBorrowHistoryReport(
     .from("borrow_transaction")
     .select(
       "id, status, quantity, borrowed_at, returned_at, expected_return_date, " +
-        "student:student_id ( id, full_name, email, year_section ), " +
+        "student:student_id ( id, full_name, email, student_id ), " +
         "sku:equipment_sku_id ( id, qr_code, name )",
       { count: "exact" },
     )
@@ -305,7 +305,7 @@ export async function getConsumableUsageReport(
     .from("consumable_usage")
     .select(
       "id, used_at, quantity_used, " +
-        "student:student_id ( id, full_name, email, year_section ), " +
+        "student:student_id ( id, full_name, email, student_id ), " +
         "sku:consumable_sku_id ( id, qr_code, name, unit )",
       { count: "exact" },
     )
@@ -421,7 +421,7 @@ export async function getOverdueLostReport(
     .from("borrow_transaction")
     .select(
       "id, status, quantity, borrowed_at, expected_return_date, " +
-        "student:student_id ( id, full_name, email, year_section ), " +
+        "student:student_id ( id, full_name, email, student_id ), " +
         "sku:equipment_sku_id ( id, qr_code, name )",
       { count: "exact" },
     )

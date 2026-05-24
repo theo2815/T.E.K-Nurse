@@ -77,7 +77,12 @@ export const AUDIT_ACTION_GROUPS: ReadonlyArray<{
   },
   {
     group: "Account",
-    actions: ["student_suspended", "student_reinstated"],
+    actions: [
+      "student_suspended",
+      "student_reinstated",
+      "user_promoted_to_staff",
+      "user_demoted_to_student",
+    ],
   },
 ];
 

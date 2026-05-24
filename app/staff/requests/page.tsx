@@ -51,7 +51,7 @@ function pendingCardProps(r: StaffPendingRequestRow) {
     type: r.type,
     qr: r.sku.qr_code,
     studentName: r.student.full_name,
-    studentDetail: r.student.year_section ?? r.student.email,
+    studentDetail: r.student.student_id ?? r.student.email,
     itemName: r.sku.name,
     itemPhotoUrl: r.sku.photo_url,
     itemMeta: `${formatPickup(r.borrow_date)}  ·  Qty ${r.quantity}${qtyUnit}`,

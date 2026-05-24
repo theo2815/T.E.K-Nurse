@@ -302,9 +302,9 @@ function ReservationRow({
           </p>
           <p className="text-[12.5px] text-slate font-mono mt-0.5 truncate">
             {request.student.email}
-            {request.student.year_section && (
+            {request.student.student_id && (
               <span className="ml-2 uppercase">
-                · {request.student.year_section}
+                · {request.student.student_id}
               </span>
             )}
           </p>

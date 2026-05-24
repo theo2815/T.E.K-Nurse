@@ -45,6 +45,8 @@ const LABELS: Record<string, string> = {
   // Account
   student_suspended: "Student suspended",
   student_reinstated: "Student reinstated",
+  user_promoted_to_staff: "Promoted to staff",
+  user_demoted_to_student: "Demoted to student",
 };
 
 export function actionLabel(actionType: string): string {
@@ -84,6 +86,8 @@ const TONE: Record<string, ActionTone> = {
   marked_lost: "alert",
   item_marked_lost: "alert",
   student_suspended: "alert",
+  user_promoted_to_staff: "success",
+  user_demoted_to_student: "alert",
   sku_deleted: "alert",
   lot_deleted: "alert",
 };

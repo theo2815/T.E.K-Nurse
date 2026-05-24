@@ -32,7 +32,7 @@ async function assertStaff(): Promise<
     .select("role")
     .eq("id", user.id)
     .maybeSingle();
-  if (!profile || profile.role !== "staff") {
+  if (!profile || (profile.role !== "staff" && profile.role !== "admin")) {
     return { ok: false, error: "Staff only." };
   }
   return { ok: true, userId: user.id };
@@ -74,6 +74,24 @@ function friendlyError(message: string): string {
   }
   if (/reason of at least 3 characters/i.test(message)) {
     return "Please give a reason of at least 3 characters.";
+  }
+  if (/Only admins can (promote|demote)/i.test(message)) {
+    return "Only admins can change user roles.";
+  }
+  if (/cannot change your own role/i.test(message)) {
+    return "You cannot change your own role.";
+  }
+  if (/promote_to_staff only applies to students/i.test(message)) {
+    return "Only student accounts can be promoted to staff.";
+  }
+  if (/demote_to_student only applies to staff/i.test(message)) {
+    return "Only staff accounts can be demoted to students.";
+  }
+  if (/Admin accounts cannot be demoted/i.test(message)) {
+    return "Admin accounts cannot be demoted.";
+  }
+  if (/Cannot promote a suspended account/i.test(message)) {
+    return "Reinstate this student before promoting them to staff.";
   }
   return message;
 }

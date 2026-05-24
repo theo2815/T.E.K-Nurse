@@ -7,7 +7,7 @@ export type StudentRosterRow = {
   id: string;
   full_name: string;
   email: string;
-  year_section: string | null;
+  student_id: string | null;
   is_active: boolean;
   created_at: string;
   /** Open BORROWED + OVERDUE borrows for this student. */
@@ -37,7 +37,7 @@ export async function listStudents(
   let q = supabase
     .from("users")
     .select(
-      "id, full_name, email, year_section, is_active, created_at",
+      "id, full_name, email, student_id, is_active, created_at",
       { count: "exact" },
     )
     .eq("role", "student")
@@ -58,7 +58,7 @@ export async function listStudents(
     id: string;
     full_name: string;
     email: string;
-    year_section: string | null;
+    student_id: string | null;
     is_active: boolean;
     created_at: string;
   };
@@ -170,7 +170,7 @@ export async function getStudentDetail(id: string): Promise<StudentDetail | null
   const supabase = await createClient();
   const { data: profile, error } = await supabase
     .from("users")
-    .select("id, full_name, email, year_section, is_active, created_at, role")
+    .select("id, full_name, email, student_id, is_active, created_at, role")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -252,7 +252,7 @@ export async function getStudentDetail(id: string): Promise<StudentDetail | null
     id: profile.id as string,
     full_name: profile.full_name as string,
     email: profile.email as string,
-    year_section: (profile.year_section as string | null) ?? null,
+    student_id: (profile.student_id as string | null) ?? null,
     is_active: profile.is_active as boolean,
     created_at: profile.created_at as string,
     active_loan_count: active,

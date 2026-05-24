@@ -105,8 +105,8 @@ export function StaffAwaitingPickupCard({ request: r }: Props) {
             <h3 className="mt-0.5 font-display italic font-extrabold text-[22px] leading-tight text-navy line-clamp-1">
               {r.student.full_name}
             </h3>
-            {r.student.year_section && (
-              <p className="text-[13px] text-slate/80">{r.student.year_section}</p>
+            {r.student.student_id && (
+              <p className="text-[13px] text-slate/80">{r.student.student_id}</p>
             )}
           </div>
 

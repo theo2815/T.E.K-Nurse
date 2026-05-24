@@ -30,7 +30,7 @@ export function StaffLoanCard({ loan }: { loan: ActiveLoanRow }) {
   const remaining = daysDelta;
   const overdueDays = -daysDelta;
 
-  const studentDetail = loan.student.year_section ?? loan.student.email;
+  const studentDetail = loan.student.student_id ?? loan.student.email;
   const qtyLabel = `${loan.quantity} ${loan.quantity === 1 ? "unit" : "units"}`;
 
   return (

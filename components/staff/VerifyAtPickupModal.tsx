@@ -6,7 +6,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
-  GraduationCap,
+  IdCard,
   Mail,
   Package,
   Beaker,
@@ -146,15 +146,15 @@ export function VerifyAtPickupModal({
                   {request.student.email}
                 </span>
               </span>
-              {request.student.year_section && (
+              {request.student.student_id && (
                 <span className="inline-flex items-center gap-1.5">
-                  <GraduationCap
+                  <IdCard
                     size={13}
                     strokeWidth={1.75}
                     className="text-slate/60"
                   />
                   <span className="font-mono uppercase tracking-[0.06em]">
-                    {request.student.year_section}
+                    {request.student.student_id}
                   </span>
                 </span>
               )}

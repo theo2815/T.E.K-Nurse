@@ -147,6 +147,27 @@ export const sampleData: Record<TemplateName, EmailPayload> = {
       note: "Replacement oximeter received — thanks for the patience.",
     },
   },
+  staff_promoted: {
+    template: "staff_promoted",
+    payload: {
+      note: "Welcome to the team — you're covering Tuesday afternoons.",
+      staff_id: "TEK-007",
+    },
+  },
+  staff_demoted: {
+    template: "staff_demoted",
+    payload: {
+      note: "End of semester rotation — thanks for the help this term.",
+    },
+  },
+  staff_invite: {
+    template: "staff_invite",
+    payload: {
+      invite_url:
+        "https://teknurse.vercel.app/accept-invite#access_token=preview-token-placeholder&type=invite",
+      full_name: "Nina Reyes",
+    },
+  },
 };
 
 export const templateGroups: Array<{ label: string; templates: TemplateName[] }> = [
@@ -183,6 +204,12 @@ export const templateGroups: Array<{ label: string; templates: TemplateName[] }>
   },
   {
     label: "ACCOUNT",
-    templates: ["student_suspended", "student_reinstated"],
+    templates: [
+      "student_suspended",
+      "student_reinstated",
+      "staff_promoted",
+      "staff_demoted",
+      "staff_invite",
+    ],
   },
 ];

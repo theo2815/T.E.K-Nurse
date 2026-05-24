@@ -96,9 +96,9 @@ export function StudentProfileHeader({
                 <Mail size={14} strokeWidth={1.75} className="text-teal" />
                 {student.email}
               </span>
-              {student.year_section && (
+              {student.student_id && (
                 <span className="uppercase text-caps-md font-semibold tracking-[0.08em]">
-                  · {student.year_section}
+                  · {student.student_id}
                 </span>
               )}
             </p>

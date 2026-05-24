@@ -46,6 +46,7 @@ export default async function StudentLayout({
         userId={user.id}
         fullName={profile.full_name}
         email={profile.email}
+        role="student"
         homeHref="/student/home"
         initialUnreadCount={initialUnreadCount}
         initialNotifications={initialNotifications}

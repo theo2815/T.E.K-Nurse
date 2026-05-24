@@ -7,7 +7,7 @@ import {
   CheckCircle2,
   User as UserIcon,
   Mail,
-  GraduationCap,
+  IdCard,
   XCircle,
   Ticket,
 } from "lucide-react";
@@ -193,15 +193,15 @@ export default async function StaffRequestDetailPage({
               <Mail size={14} strokeWidth={1.75} className="text-slate/60" />
               <span className="font-mono">{req.student.email}</span>
             </span>
-            {req.student.year_section && (
+            {req.student.student_id && (
               <span className="inline-flex items-center gap-1.5">
-                <GraduationCap
+                <IdCard
                   size={14}
                   strokeWidth={1.75}
                   className="text-slate/60"
                 />
                 <span className="font-mono uppercase tracking-[0.06em]">
-                  {req.student.year_section}
+                  {req.student.student_id}
                 </span>
               </span>
             )}

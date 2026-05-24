@@ -8,6 +8,8 @@ export function TopBar({
   userId,
   fullName,
   email,
+  role,
+  isAdmin = false,
   homeHref,
   initialUnreadCount,
   initialNotifications,
@@ -16,6 +18,8 @@ export function TopBar({
   userId: string;
   fullName: string;
   email: string;
+  role: "staff" | "student";
+  isAdmin?: boolean;
   homeHref: string;
   initialUnreadCount: number;
   initialNotifications: NotificationRow[];
@@ -56,7 +60,13 @@ export function TopBar({
           initialRows={initialNotifications}
           fullPageHref={notificationsHref}
         />
-        <AvatarMenu initials={initials} fullName={fullName} email={email} />
+        <AvatarMenu
+          initials={initials}
+          fullName={fullName}
+          email={email}
+          role={role}
+          isAdmin={isAdmin}
+        />
       </div>
     </header>
   );

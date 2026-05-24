@@ -12,11 +12,29 @@ import {
   isPasswordStrong,
 } from "@/components/PasswordChecklist";
 import { createClient } from "@/lib/supabase/client";
+import { checkEmailAvailable } from "./actions";
 
 const EMAIL_DOMAIN = "@cit.edu";
 const RESEND_COOLDOWN_SECONDS = 60;
+const STUDENT_ID_PATTERN = /^\d{2}-\d{4}-\d{3}$/;
+const STUDENT_ID_HINT = "Format: YY-NNNN-NNN (e.g. 12-3456-789)";
 
 type Stage = "form" | "otp";
+
+function friendlyAuthError(message: string | null | undefined): string | null {
+  if (!message) return null;
+  const lower = message.toLowerCase();
+  if (lower.includes("token has expired") || lower.includes("otp expired")) {
+    return "That code has expired. Use Resend to get a new one.";
+  }
+  if (lower.includes("invalid") && lower.includes("token")) {
+    return "That code doesn't match. Double-check the 6 digits and try again.";
+  }
+  if (lower.includes("user already registered") || lower.includes("already been registered")) {
+    return "This email is already registered.";
+  }
+  return message;
+}
 
 export default function SignupPage() {
   const router = useProgressRouter();
@@ -25,18 +43,20 @@ export default function SignupPage() {
   const [stage, setStage] = useState<Stage>("form");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [yearSection, setYearSection] = useState("");
+  const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [otp, setOtp] = useState("");
 
   const [formError, setFormError] = useState<string | null>(null);
+  const [emailTakenError, setEmailTakenError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const normalizedEmail = email.trim().toLowerCase();
   const emailIsValid = normalizedEmail.endsWith(EMAIL_DOMAIN);
+  const studentIdValid = STUDENT_ID_PATTERN.test(studentId.trim());
   const passwordIsStrong = isPasswordStrong(password);
   const passwordsMatch = password.length > 0 && password === confirm;
 
@@ -44,6 +64,9 @@ export default function SignupPage() {
     email.length > 0 && !emailIsValid
       ? `Must be a ${EMAIL_DOMAIN} address.`
       : undefined;
+
+  const studentIdError =
+    studentId.length > 0 && !studentIdValid ? STUDENT_ID_HINT : undefined;
 
   const confirmError =
     confirm.length > 0 && password !== confirm
@@ -54,6 +77,7 @@ export default function SignupPage() {
     !submitting &&
     fullName.trim().length > 0 &&
     emailIsValid &&
+    studentIdValid &&
     passwordIsStrong &&
     passwordsMatch;
 
@@ -66,12 +90,37 @@ export default function SignupPage() {
     return () => clearInterval(id);
   }, [resendCooldown]);
 
+  // Clear the email-taken callout when the user edits the email further.
+  useEffect(() => {
+    if (emailTakenError) setEmailTakenError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email]);
+
   async function onSubmitForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!canSubmit) return;
 
     setFormError(null);
+    setEmailTakenError(null);
     setSubmitting(true);
+
+    // Pre-check: if the email is already registered, surface a friendly
+    // inline error and never call signUp(). Supabase's anti-enumeration
+    // default would otherwise send the user to OTP for an account that
+    // was never created — confusing and unrecoverable in the UI.
+    const availability = await checkEmailAvailable(normalizedEmail);
+    if (!availability.ok) {
+      setSubmitting(false);
+      setFormError(availability.error);
+      return;
+    }
+    if (!availability.available) {
+      setSubmitting(false);
+      setEmailTakenError(
+        "This email is already registered.",
+      );
+      return;
+    }
 
     const supabase = createClient();
     const { error } = await supabase.auth.signUp({
@@ -80,7 +129,7 @@ export default function SignupPage() {
       options: {
         data: {
           full_name: fullName.trim(),
-          year_section: yearSection.trim() || null,
+          student_id: studentId.trim(),
         },
       },
     });
@@ -88,7 +137,7 @@ export default function SignupPage() {
     setSubmitting(false);
 
     if (error) {
-      setFormError(error.message);
+      setFormError(friendlyAuthError(error.message));
       return;
     }
 
@@ -111,13 +160,12 @@ export default function SignupPage() {
     setSubmitting(false);
 
     if (verifyError) {
-      setFormError(verifyError.message);
+      setFormError(friendlyAuthError(verifyError.message));
       setOtp("");
       otpRef.current?.clear();
       return;
     }
 
-    // Signed in — middleware will route to /staff/home or /student/home.
     router.replace("/");
     router.refresh();
   }
@@ -142,7 +190,7 @@ export default function SignupPage() {
     setSubmitting(false);
 
     if (error) {
-      setFormError(error.message);
+      setFormError(friendlyAuthError(error.message));
       return;
     }
 
@@ -233,7 +281,12 @@ export default function SignupPage() {
       <h1 className="font-display italic font-extrabold text-display md:text-[48px] text-navy">
         Create account
       </h1>
-      <hr className="mt-3 mb-8 w-12" />
+      <hr className="mt-3 mb-4 w-12" />
+
+      <p className="text-[14px] text-slate leading-relaxed mb-8">
+        Students only. Staff and admin accounts are invited by an admin —
+        if you're staff, ask your admin to send you an invite.
+      </p>
 
       <p className="text-slate text-[14px] mb-6">
         Fields marked <span className="text-teal font-bold">*</span> are required.
@@ -260,12 +313,34 @@ export default function SignupPage() {
           required
           requiredMark
         />
+        {emailTakenError && (
+          <div
+            role="alert"
+            className="border-l-[3px] border-red-deep bg-red-deep/5 rounded-r px-4 py-3 flex flex-col gap-1.5"
+          >
+            <p className="font-mono uppercase text-caps-sm text-red-deep font-bold tracking-[0.1em]">
+              ⚠ {emailTakenError}
+            </p>
+            <p className="text-[13px] text-navy">
+              Try signing in instead.{" "}
+              <Link
+                href="/login"
+                className="font-medium hover:underline underline-offset-4 decoration-teal decoration-2"
+              >
+                Go to sign in →
+              </Link>
+            </p>
+          </div>
+        )}
         <Input
-          label="Year / section"
+          label="Student ID"
           autoComplete="off"
-          placeholder="BSN 3-A (optional)"
-          value={yearSection}
-          onChange={(e) => setYearSection(e.target.value)}
+          placeholder="12-3456-789"
+          value={studentId}
+          onChange={(e) => setStudentId(e.target.value)}
+          error={studentIdError}
+          required
+          requiredMark
         />
         <div>
           <Input
@@ -301,12 +376,14 @@ export default function SignupPage() {
         />
 
         {formError && (
-          <p
+          <div
             role="alert"
-            className="font-mono uppercase text-caps-sm text-red-deep tracking-[0.05em]"
+            className="border-l-[3px] border-red-deep bg-red-deep/5 rounded-r px-4 py-3"
           >
-            ⚠  {formError}
-          </p>
+            <p className="font-mono uppercase text-caps-sm text-red-deep font-bold tracking-[0.1em]">
+              ⚠ {formError}
+            </p>
+          </div>
         )}
 
         <Button type="submit" variant="primary" disabled={!canSubmit} loading={submitting}>

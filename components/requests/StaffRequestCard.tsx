@@ -9,7 +9,7 @@ export type StaffRequestCardProps = {
   type: "equipment" | "consumable";
   qr: string;
   studentName: string;
-  /** e.g. year_section "4 CS-A" (optional). */
+  /** e.g. student_id "12-3456-789" (optional). */
   studentDetail?: string | null;
   itemName: string;
   itemPhotoUrl?: string | null;

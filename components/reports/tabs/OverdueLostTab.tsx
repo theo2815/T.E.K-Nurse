@@ -91,9 +91,9 @@ export async function OverdueLostTab({
           <span className="text-[14px] text-navy font-semibold group-hover:text-teal-deep transition-colors">
             {r.student.full_name}
           </span>
-          {r.student.year_section && (
+          {r.student.student_id && (
             <span className="font-mono uppercase text-caps-sm text-slate/80 tracking-[0.06em]">
-              {r.student.year_section}
+              {r.student.student_id}
             </span>
           )}
         </Link>

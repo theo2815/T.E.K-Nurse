@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, Clock, GraduationCap, Mail } from "lucide-react";
+import { ArrowRight, Clock, IdCard, Mail } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { PhotoFrame } from "@/components/catalog/PhotoFrame";
 import type { StaffPendingRequestRow } from "@/lib/supabase/queries/staff-requests";
@@ -125,15 +125,15 @@ function StudentRow({
                 {req.student.email}
               </span>
             </span>
-            {req.student.year_section && (
+            {req.student.student_id && (
               <span className="inline-flex items-center gap-1 shrink-0">
-                <GraduationCap
+                <IdCard
                   size={11}
                   strokeWidth={1.75}
                   className="text-slate/60"
                 />
                 <span className="font-mono uppercase tracking-[0.06em]">
-                  {req.student.year_section}
+                  {req.student.student_id}
                 </span>
               </span>
             )}

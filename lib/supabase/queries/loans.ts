@@ -12,7 +12,7 @@ export type ActiveLoanRow = {
     id: string;
     full_name: string;
     email: string;
-    year_section: string | null;
+    student_id: string | null;
   };
   sku: {
     id: string;
@@ -23,8 +23,8 @@ export type ActiveLoanRow = {
 };
 
 type StudentJoin =
-  | { id: string; full_name: string; email: string; year_section: string | null }
-  | { id: string; full_name: string; email: string; year_section: string | null }[]
+  | { id: string; full_name: string; email: string; student_id: string | null }
+  | { id: string; full_name: string; email: string; student_id: string | null }[]
   | null;
 
 type SkuJoin =
@@ -33,9 +33,9 @@ type SkuJoin =
   | null;
 
 function unwrapStudent(s: StudentJoin): ActiveLoanRow["student"] {
-  if (!s) return { id: "", full_name: "Unknown", email: "", year_section: null };
+  if (!s) return { id: "", full_name: "Unknown", email: "", student_id: null };
   const u = Array.isArray(s) ? s[0] : s;
-  return u ?? { id: "", full_name: "Unknown", email: "", year_section: null };
+  return u ?? { id: "", full_name: "Unknown", email: "", student_id: null };
 }
 
 function unwrapSku(s: SkuJoin): ActiveLoanRow["sku"] {
@@ -55,7 +55,7 @@ export async function listActiveLoans(opts: {
     .from("borrow_transaction")
     .select(
       "id, quantity, status, borrowed_at, expected_return_date, " +
-        "student:student_id ( id, full_name, email, year_section ), " +
+        "student:student_id ( id, full_name, email, student_id ), " +
         "sku:equipment_sku_id ( id, qr_code, name, photo_url )",
     )
     .in("status", statusFilter)

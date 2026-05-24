@@ -13,6 +13,11 @@ const PUBLIC_PATHS = [
   // /api/email/drain authenticates via Bearer CRON_SECRET (called by pg_cron
   // server-to-server — no cookies). Must bypass the cookie-redirect branch.
   "/api/email/drain",
+  // /accept-invite consumes a magic-link token from the URL fragment via
+  // client-side JS; on first server-rendered request there's no cookie yet
+  // and middleware would otherwise bounce to /login. The page itself
+  // verifies the session and renders an "invite expired" state if missing.
+  "/accept-invite",
 ];
 
 function isPublicPath(pathname: string) {
@@ -67,8 +72,9 @@ export async function updateSession(request: NextRequest) {
       .eq("id", user.id)
       .maybeSingle();
 
-    const role = profile?.role as "staff" | "student" | undefined;
-    const home = role === "staff" ? "/staff/home" : "/student/home";
+    const role = profile?.role as "staff" | "student" | "admin" | undefined;
+    const isStaffOrAdmin = role === "staff" || role === "admin";
+    const home = isStaffOrAdmin ? "/staff/home" : "/student/home";
 
     // Authed user on an auth page → bounce to their home.
     // EXCEPTION: /reset-password is reachable while authenticated because the
@@ -85,13 +91,14 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Wrong-role gate
+    // Wrong-role gate. Admin counts as staff for all /staff/* routes; the
+    // narrower /staff/admin/users surface gates inside the page on is_admin().
     if (role === "student" && pathname.startsWith("/staff")) {
       const url = request.nextUrl.clone();
       url.pathname = "/student/home";
       return NextResponse.redirect(url);
     }
-    if (role === "staff" && pathname.startsWith("/student")) {
+    if (isStaffOrAdmin && pathname.startsWith("/student")) {
       const url = request.nextUrl.clone();
       url.pathname = "/staff/home";
       return NextResponse.redirect(url);

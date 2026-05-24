@@ -200,6 +200,42 @@ export type StudentReinstatedPayload = {
   };
 };
 
+export type StaffPromotedPayload = {
+  /** supabase/migrations/0021_admin_rpcs.sql — promote_to_staff RPC */
+  template: "staff_promoted";
+  payload: {
+    /** Optional admin note. Empty string when none provided. */
+    note: string;
+    /** The newly-assigned TEK-NNN identifier. */
+    staff_id: string;
+  };
+};
+
+export type StaffDemotedPayload = {
+  /** supabase/migrations/0021_admin_rpcs.sql — demote_to_student RPC */
+  template: "staff_demoted";
+  payload: {
+    /** Optional admin note. Empty string when none provided. */
+    note: string;
+  };
+};
+
+export type StaffInvitePayload = {
+  /**
+   * Enqueued from app/staff/admin/users/actions.ts (inviteStaff /
+   * resendStaffInvite). The invite_url is generated server-side via
+   * auth.admin.generateLink({type: 'invite'}) and is single-use.
+   */
+  template: "staff_invite";
+  payload: {
+    /** Magic-link URL the invitee clicks to set their password. */
+    invite_url: string;
+    /** What the admin entered as the invitee's full name. Empty falls
+     *  back to a neutral greeting. */
+    full_name: string;
+  };
+};
+
 export type EmailPayload =
   | BorrowApprovedWithCodePayload
   | BorrowPickedUpPayload
@@ -220,7 +256,10 @@ export type EmailPayload =
   | OverdueReminderPayload
   | MarkedLostPayload
   | StudentSuspendedPayload
-  | StudentReinstatedPayload;
+  | StudentReinstatedPayload
+  | StaffPromotedPayload
+  | StaffDemotedPayload
+  | StaffInvitePayload;
 
 export type TemplateName = EmailPayload["template"];
 

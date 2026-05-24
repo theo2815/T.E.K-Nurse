@@ -57,14 +57,14 @@ export function StudentsTable({ rows }: { rows: StudentRosterRow[] }) {
       ),
     },
     {
-      key: "year_section",
-      header: "Year · Section",
+      key: "student_id",
+      header: "Student ID",
       width: "140px",
       hideOnMobile: true,
       render: (r) =>
-        r.year_section ? (
+        r.student_id ? (
           <span className="font-mono uppercase text-caps-md text-slate tracking-[0.06em]">
-            {r.year_section}
+            {r.student_id}
           </span>
         ) : (
           <span className="font-mono uppercase text-caps-sm text-slate/50 tracking-[0.08em]">

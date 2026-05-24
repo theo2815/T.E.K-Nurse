@@ -22,6 +22,9 @@ import * as OverdueReminder from "./templates/overdue-reminder";
 import * as MarkedLost from "./templates/marked-lost";
 import * as StudentSuspended from "./templates/student-suspended";
 import * as StudentReinstated from "./templates/student-reinstated";
+import * as StaffPromoted from "./templates/staff-promoted";
+import * as StaffDemoted from "./templates/staff-demoted";
+import * as StaffInvite from "./templates/staff-invite";
 
 type Resolved = {
   subject: string;
@@ -134,6 +137,21 @@ function resolve(p: EmailPayload): Resolved {
       return {
         subject: StudentReinstated.subject(),
         jsx: StudentReinstated.render(p.payload),
+      };
+    case "staff_promoted":
+      return {
+        subject: StaffPromoted.subject(),
+        jsx: StaffPromoted.render(p.payload),
+      };
+    case "staff_demoted":
+      return {
+        subject: StaffDemoted.subject(),
+        jsx: StaffDemoted.render(p.payload),
+      };
+    case "staff_invite":
+      return {
+        subject: StaffInvite.subject(),
+        jsx: StaffInvite.render(p.payload),
       };
     default: {
       const _exhaustive: never = p;

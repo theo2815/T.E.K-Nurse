@@ -8,16 +8,20 @@ import { NavBadge } from "./NavBadge";
 
 export function SideNav({
   role,
+  isAdmin = false,
   badges,
 }: {
   role: "staff" | "student";
+  isAdmin?: boolean;
   badges?: Record<string, number>;
 }) {
   const pathname = usePathname();
   const items = role === "staff" ? STAFF_NAV : STUDENT_NAV;
 
   const fabItem = items.find((i) => i.fab);
-  const navItems = items.filter((i) => !i.fab && !i.mobileOnly);
+  const navItems = items.filter(
+    (i) => !i.fab && !i.mobileOnly && (!i.adminOnly || isAdmin),
+  );
 
   return (
     <aside

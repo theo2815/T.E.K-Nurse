@@ -13,6 +13,36 @@ const RESEND_COOLDOWN_SECONDS = 60;
 
 type Stage = "email" | "otp";
 
+// Translate Supabase auth errors into copy a non-engineer can act on.
+// Order matters — first match wins.
+const FRIENDLY: Array<[RegExp, string]> = [
+  [
+    /(otp|token).*(expired)/i,
+    "That code expired. Request a new one.",
+  ],
+  [
+    /(otp|token).*(invalid|not.*valid)/i,
+    "That code doesn't match. Try again or request a new one.",
+  ],
+  [/token has expired/i, "That code expired. Request a new one."],
+  [/invalid login credentials/i, "That code doesn't match. Try again."],
+  [
+    /rate limit/i,
+    "Too many attempts. Wait a minute, then try again.",
+  ],
+  [
+    /email.*not confirmed/i,
+    "Confirm your email first, then come back to reset your password.",
+  ],
+];
+
+function friendlyAuthError(message: string): string {
+  for (const [regex, friendly] of FRIENDLY) {
+    if (regex.test(message)) return friendly;
+  }
+  return message;
+}
+
 export default function ForgotPasswordPage() {
   const router = useProgressRouter();
   const otpRef = useRef<OtpInputHandle>(null);
@@ -51,7 +81,7 @@ export default function ForgotPasswordPage() {
     setSubmitting(false);
 
     if (authError) {
-      setError(authError.message);
+      setError(friendlyAuthError(authError.message));
       return;
     }
 
@@ -75,7 +105,7 @@ export default function ForgotPasswordPage() {
     setSubmitting(false);
 
     if (verifyError) {
-      setError(verifyError.message);
+      setError(friendlyAuthError(verifyError.message));
       setOtp("");
       otpRef.current?.clear();
       return;
@@ -101,7 +131,7 @@ export default function ForgotPasswordPage() {
     setSubmitting(false);
 
     if (authError) {
-      setError(authError.message);
+      setError(friendlyAuthError(authError.message));
       return;
     }
 
@@ -125,9 +155,9 @@ export default function ForgotPasswordPage() {
         <hr className="mt-3 mb-8 w-12" />
 
         <p className="text-navy mb-6">
-          We sent a 6-digit code to{" "}
-          <span className="font-mono text-[14px]">{email}</span>. Enter it
-          below to continue.
+          If an account exists for{" "}
+          <span className="font-mono text-[14px]">{email}</span>, we&apos;ve
+          sent a 6-digit code. Enter it below to continue.
         </p>
 
         <form onSubmit={onSubmitOtp} className="flex flex-col gap-5" noValidate>

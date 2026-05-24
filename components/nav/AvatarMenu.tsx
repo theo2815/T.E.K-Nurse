@@ -8,6 +8,7 @@ import {
   LogOut,
   ScrollText,
   Settings,
+  ShieldCheck,
   UserCircle2,
   Users,
   type LucideIcon,
@@ -20,25 +21,39 @@ type NavLink = {
   icon: LucideIcon;
   /** When true, hidden on md+ — the desktop sidebar already exposes these. */
   mobileOnly?: boolean;
+  /** When true, only renders for admin viewers. */
+  adminOnly?: boolean;
 };
 
-const NAV_LINKS: NavLink[] = [
+const STAFF_NAV_LINKS: NavLink[] = [
   { label: "Reports", href: "/staff/reports", icon: BarChart3, mobileOnly: true },
   { label: "Students", href: "/staff/students", icon: Users, mobileOnly: true },
   { label: "Audit log", href: "/staff/audit-log", icon: ScrollText, mobileOnly: true },
+  { label: "Manage users", href: "/staff/admin/users", icon: ShieldCheck, mobileOnly: true, adminOnly: true },
   { label: "Profile", href: "/staff/profile", icon: UserCircle2 },
   { label: "Settings", href: "/staff/settings", icon: Settings },
+];
+
+const STUDENT_NAV_LINKS: NavLink[] = [
+  { label: "Profile", href: "/student/profile", icon: UserCircle2 },
+  { label: "Settings", href: "/student/settings", icon: Settings },
 ];
 
 export function AvatarMenu({
   initials,
   fullName,
   email,
+  role,
+  isAdmin = false,
 }: {
   initials: string;
   fullName: string;
   email: string;
+  role: "staff" | "student";
+  isAdmin?: boolean;
 }) {
+  const rawLinks = role === "staff" ? STAFF_NAV_LINKS : STUDENT_NAV_LINKS;
+  const links = rawLinks.filter((l) => !l.adminOnly || isAdmin);
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -93,7 +108,7 @@ export function AvatarMenu({
           <hr className="my-4" />
 
           <nav className="flex flex-col">
-            {NAV_LINKS.map((link) => {
+            {links.map((link) => {
               const Icon = link.icon;
               return (
                 <Link

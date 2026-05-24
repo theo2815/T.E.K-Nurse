@@ -42,13 +42,13 @@ export type StaffPendingRequestRow = {
     id: string;
     full_name: string;
     email: string;
-    year_section: string | null;
+    student_id: string | null;
   };
 };
 
 type StudentJoin =
-  | { id: string; full_name: string; email: string; year_section: string | null }
-  | { id: string; full_name: string; email: string; year_section: string | null }[]
+  | { id: string; full_name: string; email: string; student_id: string | null }
+  | { id: string; full_name: string; email: string; student_id: string | null }[]
   | null;
 
 type UserJoin =
@@ -128,15 +128,15 @@ type ConsumableJoin = {
 };
 
 const EQUIPMENT_SELECT =
-  "id, quantity, borrow_date, expected_return_date, status, expires_at, notes, decline_reason, created_at, approved_at, pickup_code, pickup_expires_at, released_at, approver:approved_by ( full_name ), releaser:released_by ( full_name ), equipment_sku ( id, qr_code, name, description, photo_url ), student:student_id ( id, full_name, email, year_section )";
+  "id, quantity, borrow_date, expected_return_date, status, expires_at, notes, decline_reason, created_at, approved_at, pickup_code, pickup_expires_at, released_at, approver:approved_by ( full_name ), releaser:released_by ( full_name ), equipment_sku ( id, qr_code, name, description, photo_url ), student:student_id ( id, full_name, email, student_id )";
 
 const CONSUMABLE_SELECT =
-  "id, quantity, borrow_date, status, expires_at, notes, decline_reason, created_at, approved_at, pickup_code, pickup_expires_at, released_at, approver:approved_by ( full_name ), releaser:released_by ( full_name ), consumable_sku ( id, qr_code, name, description, photo_url, unit ), student:student_id ( id, full_name, email, year_section )";
+  "id, quantity, borrow_date, status, expires_at, notes, decline_reason, created_at, approved_at, pickup_code, pickup_expires_at, released_at, approver:approved_by ( full_name ), releaser:released_by ( full_name ), consumable_sku ( id, qr_code, name, description, photo_url, unit ), student:student_id ( id, full_name, email, student_id )";
 
 function unwrapStudent(s: StudentJoin) {
-  if (!s) return { id: "", full_name: "Unknown", email: "", year_section: null };
+  if (!s) return { id: "", full_name: "Unknown", email: "", student_id: null };
   const u = Array.isArray(s) ? s[0] : s;
-  return u ?? { id: "", full_name: "Unknown", email: "", year_section: null };
+  return u ?? { id: "", full_name: "Unknown", email: "", student_id: null };
 }
 
 function unwrapSku<T>(s: T | T[] | null): T | null {
@@ -337,7 +337,7 @@ export type StudentSearchRow = {
   id: string;
   full_name: string;
   email: string;
-  year_section: string | null;
+  student_id: string | null;
   /** Count of borrow_transaction rows in OVERDUE or LOST status for this
    *  student. Populated only by searchStudents / getStudentById — pre-existing
    *  joins on request/transaction rows leave it undefined. Surfaced in the
@@ -363,7 +363,7 @@ export async function searchStudents(q: string): Promise<StudentSearchRow[]> {
 
   const { data, error } = await supabase
     .from("users")
-    .select("id, full_name, email, year_section")
+    .select("id, full_name, email, student_id")
     .eq("role", "student")
     .eq("is_active", true)
     .or(`full_name.ilike.${pattern},email.ilike.${pattern}`)
@@ -381,7 +381,7 @@ export async function getStudentById(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("users")
-    .select("id, full_name, email, year_section")
+    .select("id, full_name, email, student_id")
     .eq("id", id)
     .eq("role", "student")
     .maybeSingle();
@@ -428,7 +428,7 @@ export async function listOpenBorrowsForEquipmentSku(
   const { data, error } = await supabase
     .from("borrow_transaction")
     .select(
-      "id, quantity, status, borrowed_at, expected_return_date, student:student_id ( id, full_name, email, year_section )",
+      "id, quantity, status, borrowed_at, expected_return_date, student:student_id ( id, full_name, email, student_id )",
     )
     .eq("equipment_sku_id", equipmentSkuId)
     .in("status", ["BORROWED", "OVERDUE"])

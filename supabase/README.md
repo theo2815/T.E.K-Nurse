@@ -127,15 +127,142 @@ Then re-apply 0001 / 0002 / 0003 / seed.sql.
 
 ## Promoting a new staff account
 
-Self-signup always creates a `student` row. To promote someone to staff (run
-this as the `postgres` role in the SQL Editor — RLS allows staff to update any
-user, but you can't be the first staff yourself):
+Self-signup always creates a `student` row. There are two ways to get staff
+into the system:
+
+**Once Phase 11.5d has shipped (migrations 0020 + 0021 applied):** sign in as
+the admin (`tekadmin@cit.edu` — see the next section) and use
+`/staff/admin/users` to promote students with one click. The page assigns the
+TEK-NNN staff ID automatically, audits the action, and notifies the user.
+
+**Bootstrap fallback** (no admin exists yet, or you're seeding from scratch):
+run this in the SQL Editor as the `postgres` role.
 
 ```sql
+-- Promote a student to staff and assign the next TEK-NNN.
 update public.users
-   set role = 'staff'
+   set role = 'staff',
+       staff_id = 'TEK-' || lpad(
+         (coalesce(
+           (select max(substring(staff_id from 5)::int)
+              from public.users
+             where staff_id ~ '^TEK-\d{3}$'),
+           0) + 1)::text,
+         3, '0')
  where email = 'new.staff@cit.edu';
 ```
+
+## Admin bootstrap (Phase 11.5d)
+
+Phase 11.5d adds an `admin` role (strict superset of `staff`) plus the
+`/staff/admin/users` management surface. Singleton admin for v1 — one
+shared `tekadmin@cit.edu` account.
+
+**One-time setup after applying 0020 + 0021 + 0022:**
+
+> 0022 makes the `handle_new_user` trigger Dashboard-tolerant. Without
+> it, step 1 below fails with "Database error creating new user" because
+> the Dashboard form passes no `student_id`. Apply 0022 first.
+
+1. Supabase Dashboard → Authentication → Users → **Add user**.
+   Email: `tekadmin@cit.edu`. Set a strong password. Confirm the email.
+   The trigger lands the row as a student with a `00-0000-NNN`
+   placeholder; step 2 clears it.
+2. In the SQL Editor (as `postgres`), promote the new row to admin,
+   assign a staff_id, and clear the placeholder student_id — all in one
+   atomic UPDATE:
+
+   ```sql
+   update public.users
+      set role = 'admin',
+          staff_id = 'TEK-' || lpad(
+            (coalesce(
+              (select max(substring(staff_id from 5)::int)
+                 from public.users
+                where staff_id ~ '^TEK-\d{3}$'),
+              0) + 1)::text,
+            3, '0'),
+          student_id = null
+    where email = 'tekadmin@cit.edu';
+   ```
+3. Sign into the app as `tekadmin@cit.edu`. A **Manage users** entry
+   appears in the staff sidebar and the avatar menu (admin-only).
+
+Notes:
+- Admin cannot self-demote — the `demote_to_student` RPC blocks it. To
+  swap admins, manually update the row in the SQL Editor.
+- `promote_to_staff` only promotes students; `demote_to_student` only
+  demotes staff (not admin). Both are admin-only.
+- Promotions/demotions write to `audit_log` as
+  `user_promoted_to_staff` / `user_demoted_to_student` and fire the
+  `staff_promoted` / `staff_demoted` emails (critical templates —
+  always delivered regardless of recipient preference).
+
+## Staff invite flow (Phase 11.5d-inv)
+
+After 0023 lands, the admin **does not need to use the Supabase Dashboard
+to onboard staff**. The `/staff/admin/users` page now has an **Invite
+staff** button that drives the full flow:
+
+1. Admin fills in name + `@cit.edu` email → click **Send invite**.
+2. Server action calls `auth.admin.generateLink({type:'invite', ...})`,
+   which creates the `auth.users` row with no password and fires
+   `handle_new_user`. The trigger sees `pending_role='staff'` in
+   metadata and lands `public.users` as `role='staff'`, fresh `TEK-NNN`,
+   `invited_at=now()`, `invite_accepted_at=null`.
+3. The action enqueues the `staff_invite` template (critical — bypasses
+   notification preferences) carrying the magic link as `invite_url`.
+4. The drain job sends the email via Resend with our React Email
+   template.
+5. The invitee clicks the link → `/accept-invite` consumes the token,
+   prompts for a new password, calls `mark_invite_accepted()` RPC, and
+   redirects to `/staff/home`.
+
+In `/staff/admin/users`, pending invitees show an amber **Pending**
+chip in the Status column. Their Actions column has two buttons:
+- **Resend** — regenerates the magic link and re-queues the email.
+- **Cancel** — calls `auth.admin.deleteUser`; the
+  `ON DELETE CASCADE` on `public.users.id` cleans up automatically.
+  The released `TEK-NNN` is *not* reused (monotonic counter — same
+  policy as demotions).
+
+If you need to bootstrap an *admin* (singleton tekadmin account), keep
+using the Dashboard + SQL Editor flow above — the invite button only
+creates `staff`, never `admin`.
+
+## Student ID backfill (Phase 11.5a)
+
+Migration `0017_student_id.sql` replaces the old `year_section` column with
+`student_id` (format `YY-NNNN-NNN`, e.g. `12-3456-789`). New signups validate
+the format client-side and pass the value through `raw_user_meta_data` so the
+updated `handle_new_user` trigger writes it to `public.users.student_id`.
+
+**On apply against an existing database**, the migration backfills every
+existing student row with a valid-format placeholder ID (`00-0000-001`,
+`00-0000-002`, …) so the new CHECK constraints don't fail. After applying,
+edit each placeholder to the real ID via the SQL Editor:
+
+```sql
+-- See the placeholders
+select id, email, full_name, student_id
+  from public.users
+ where role = 'student' and student_id like '00-0000-%'
+ order by created_at;
+
+-- Update one student
+update public.users
+   set student_id = '12-3456-789'
+ where email = 'maria.cruz@cit.edu';
+```
+
+The format CHECK + partial UNIQUE index will reject duplicates or
+malformed values, so a typo fails loud.
+
+The migration also adds `check_email_available(p_email text)` — a
+SECURITY DEFINER RPC granted to `anon` that the signup form calls before
+`supabase.auth.signUp()` to surface a friendly "this email is already
+registered" message. Without it, Supabase's anti-enumeration default
+silently advances the user to OTP for an account that was never created.
 
 ## Email worker (cron + drain)
 
@@ -419,8 +546,12 @@ where scope = 'equipment_low_stock'
 ## Notes for future phases
 
 - **Phase 2 (Auth)**: the signup form must enforce `@cit.edu` client-side, send
-  `full_name` and `year_section` in `options.data` so `handle_new_user` picks
-  them up from `raw_user_meta_data`, and trigger email verification.
+  `full_name` and `student_id` in `options.data` so `handle_new_user` picks
+  them up from `raw_user_meta_data`, and trigger email verification. Phase
+  11.5a's migration 0017 added the `student_id` column (format
+  `YY-NNNN-NNN`, NOT NULL for students via CHECK, partial UNIQUE) and
+  replaced `handle_new_user` to route this metadata. The pre-existing
+  `year_section` column was dropped in the same migration.
 - **Phase 10 (Reports)**: when listing audit_log activity, filter
   `actor_id IS NOT NULL` if the staff view should only show human-driven
   actions; or `coalesce(actor.full_name, '(system)')` to render cron rows.

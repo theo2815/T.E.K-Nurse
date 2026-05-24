@@ -36,8 +36,11 @@ export default async function StaffLayout({
     getStaffPendingRequestCount(),
   ]);
 
-  if (!profile || profile.role !== "staff") redirect("/student/home");
+  if (!profile || (profile.role !== "staff" && profile.role !== "admin")) {
+    redirect("/student/home");
+  }
 
+  const isAdmin = profile.role === "admin";
   const navBadges = { "/staff/requests": pendingRequestCount };
 
   return (
@@ -46,14 +49,16 @@ export default async function StaffLayout({
         userId={user.id}
         fullName={profile.full_name}
         email={profile.email}
+        role="staff"
+        isAdmin={isAdmin}
         homeHref="/staff/home"
         initialUnreadCount={initialUnreadCount}
         initialNotifications={initialNotifications}
         notificationsHref="/staff/notifications"
       />
-      <SideNav role="staff" badges={navBadges} />
+      <SideNav role="staff" isAdmin={isAdmin} badges={navBadges} />
       <main className="md:ml-64 pb-20 md:pb-12">{children}</main>
-      <BottomNav role="staff" badges={navBadges} />
+      <BottomNav role="staff" isAdmin={isAdmin} badges={navBadges} />
     </div>
   );
 }
