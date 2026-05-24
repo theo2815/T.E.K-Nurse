@@ -73,6 +73,7 @@ export const AUDIT_ACTION_GROUPS: ReadonlyArray<{
       "count_adjusted",
       "item_marked_lost",
       "item_marked_maintenance",
+      "stock_received",
     ],
   },
   {

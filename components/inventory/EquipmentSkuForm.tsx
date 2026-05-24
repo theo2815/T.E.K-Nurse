@@ -129,23 +129,18 @@ export function EquipmentSkuForm(props: Props) {
             />
           )}
 
-          <Input
-            label={isEdit ? "Total units (locked — use count moves)" : "Total units"}
-            name="total_units"
-            type="number"
-            min={0}
-            step={1}
-            required={!isEdit}
-            requiredMark={!isEdit}
-            defaultValue={isEdit ? String(props.sku.total_units) : "1"}
-            readOnly={isEdit}
-            disabled={isEdit}
-            placeholder="0"
-          />
-          {isEdit && (
-            <p className="-mt-3 text-[13px] text-slate">
-              The total count grows or shrinks only via bucket moves on the SKU detail page. This keeps the count invariant safe.
-            </p>
+          {!isEdit && (
+            <Input
+              label="Total units"
+              name="total_units"
+              type="number"
+              min={0}
+              step={1}
+              required
+              requiredMark
+              defaultValue="1"
+              placeholder="0"
+            />
           )}
 
           <div className="grid gap-5 md:grid-cols-2">

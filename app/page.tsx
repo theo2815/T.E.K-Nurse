@@ -17,5 +17,7 @@ export default async function RootPage() {
     .eq("id", user.id)
     .maybeSingle();
 
-  redirect(profile?.role === "staff" ? "/staff/home" : "/student/home");
+  const isStaffOrAdmin =
+    profile?.role === "staff" || profile?.role === "admin";
+  redirect(isStaffOrAdmin ? "/staff/home" : "/student/home");
 }

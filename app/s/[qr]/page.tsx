@@ -34,14 +34,16 @@ export default async function ShortLinkPage({
     .eq("id", user.id)
     .maybeSingle();
 
-  const role = (profile?.role as "staff" | "student" | undefined) ?? "student";
+  const role =
+    (profile?.role as "staff" | "admin" | "student" | undefined) ?? "student";
+  const isStaffOrAdmin = role === "staff" || role === "admin";
   const isEquipment = equipment !== null;
 
   const destination = isEquipment
-    ? role === "staff"
+    ? isStaffOrAdmin
       ? `/staff/inventory/equipment/${encodeURIComponent(qr)}`
       : `/student/equipment/${encodeURIComponent(qr)}`
-    : role === "staff"
+    : isStaffOrAdmin
       ? `/staff/inventory/consumables/${encodeURIComponent(qr)}`
       : `/student/consumables/${encodeURIComponent(qr)}`;
 

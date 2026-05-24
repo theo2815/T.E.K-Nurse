@@ -1,4 +1,3 @@
-import { Info } from "lucide-react";
 import {
   listPendingRequests,
   listAwaitingPickupRequests,
@@ -12,6 +11,22 @@ import { RequestsTabs } from "@/components/requests/RequestsTabs";
 import { StaffRequestCard } from "@/components/requests/StaffRequestCard";
 import { StaffAwaitingPickupCard } from "@/components/requests/StaffAwaitingPickupCard";
 import { StaffRequestsRealtime } from "@/components/requests/StaffRequestsRealtime";
+import {
+  RequestsSearchableList,
+  type RequestsSearchableItem,
+} from "@/components/requests/RequestsSearchableList";
+
+function buildSearchText(r: StaffPendingRequestRow): string {
+  return [
+    r.student.full_name,
+    r.student.student_id ?? "",
+    r.student.email,
+    r.sku.name,
+    r.sku.qr_code,
+  ]
+    .join(" ")
+    .toLowerCase();
+}
 
 type QueueStage = "pending" | "awaiting";
 type QueueType = "all" | "equipment" | "consumable";
@@ -170,27 +185,24 @@ export default async function StaffRequestsPage({
           title={stage === "pending" ? "Queue clear." : "Nothing awaiting pickup."}
           hint={emptyHint(stage, type)}
         />
-      ) : stage === "pending" ? (
-        <div className="flex flex-col gap-4">
-          {rows.map((r) => (
-            <StaffRequestCard key={`${r.type}:${r.id}`} {...pendingCardProps(r)} />
-          ))}
-          <p className="mt-2 inline-flex items-center gap-2 text-[13px] text-slate italic">
-            <Info size={14} strokeWidth={1.75} />
-            Queue updates live as students submit + cancel requests.
-          </p>
-        </div>
       ) : (
-        <div className="flex flex-col gap-4">
-          {rows.map((r) => (
-            <StaffAwaitingPickupCard key={`${r.type}:${r.id}`} request={r} />
-          ))}
-          <p className="mt-2 inline-flex items-center gap-2 text-[13px] text-slate italic">
-            <Info size={14} strokeWidth={1.75} />
-            Items here are reserved for the student. Scan the QR at the counter
-            to verify the code and release.
-          </p>
-        </div>
+        (() => {
+          const items: RequestsSearchableItem[] = rows.map((r) => ({
+            id: `${r.type}:${r.id}`,
+            searchText: buildSearchText(r),
+            element:
+              stage === "pending" ? (
+                <StaffRequestCard {...pendingCardProps(r)} />
+              ) : (
+                <StaffAwaitingPickupCard request={r} />
+              ),
+          }));
+          const footer =
+            stage === "pending"
+              ? "Queue updates live as students submit + cancel requests."
+              : "Items here are reserved for the student. Scan the QR at the counter to verify the code and release.";
+          return <RequestsSearchableList items={items} footer={footer} />;
+        })()
       )}
     </div>
   );

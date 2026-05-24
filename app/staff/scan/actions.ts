@@ -20,7 +20,7 @@ async function assertStaff(): Promise<
     .select("role")
     .eq("id", user.id)
     .maybeSingle();
-  if (!profile || profile.role !== "staff") {
+  if (!profile || (profile.role !== "staff" && profile.role !== "admin")) {
     return { ok: false, error: "Staff only." };
   }
   return { ok: true, userId: user.id };

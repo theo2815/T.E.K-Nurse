@@ -74,6 +74,8 @@ export default function RootLayout({
           position="top-center"
           richColors
           closeButton
+          offset={{ top: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
+          mobileOffset={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
           toastOptions={{
             className: "font-mono uppercase tracking-[0.04em]",
           }}

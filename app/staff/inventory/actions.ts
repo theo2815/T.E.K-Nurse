@@ -23,7 +23,7 @@ async function assertStaff(): Promise<
     .select("role")
     .eq("id", user.id)
     .maybeSingle();
-  if (!profile || profile.role !== "staff") {
+  if (!profile || (profile.role !== "staff" && profile.role !== "admin")) {
     return { ok: false, error: "Staff only." };
   }
   return { ok: true, userId: user.id };
@@ -52,6 +52,9 @@ function friendlyError(message: string): string {
     return "Expiration date must be on or after received date.";
   }
   if (/A reason of at least 3 characters is required/i.test(message)) {
+    return message;
+  }
+  if (/A note of at least 3 characters is required/i.test(message)) {
     return message;
   }
   if (/Not enough units in/i.test(message)) return message;
@@ -214,6 +217,38 @@ export async function adjustEquipmentCount(input: {
     p_to_bucket: input.to_bucket,
     p_quantity: input.quantity,
     p_notes: input.notes ?? null,
+  });
+
+  if (error) return { ok: false, error: friendlyError(error.message) };
+
+  revalidatePath("/staff/inventory");
+  return { ok: true };
+}
+
+// Incoming shipment: grows total_units + available_units atomically. The only
+// path that increases total stock — the bucket-shuffle RPC above can't do it
+// without breaking the equipment_units_invariant CHECK. See migration 0025.
+export async function receiveEquipmentStock(input: {
+  sku_id: string;
+  quantity: number;
+  notes: string;
+}): Promise<Result> {
+  const gate = await assertStaff();
+  if (!gate.ok) return { ok: false, error: gate.error };
+
+  if (!Number.isInteger(input.quantity) || input.quantity < 1) {
+    return { ok: false, error: "Quantity must be a whole number ≥ 1." };
+  }
+  const notes = input.notes.trim();
+  if (notes.length < 3) {
+    return { ok: false, error: "A note of at least 3 characters is required." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("staff_receive_equipment_stock", {
+    p_sku_id: input.sku_id,
+    p_quantity: input.quantity,
+    p_notes: notes,
   });
 
   if (error) return { ok: false, error: friendlyError(error.message) };

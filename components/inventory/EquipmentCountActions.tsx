@@ -2,9 +2,16 @@
 
 import { useState } from "react";
 import { useProgressRouter } from "@/lib/use-progress-router";
-import { ArrowRightLeft, Wrench, AlertTriangle, Undo2 } from "lucide-react";
+import {
+  ArrowRightLeft,
+  Wrench,
+  AlertTriangle,
+  Undo2,
+  PackagePlus,
+} from "lucide-react";
 import type { EquipmentSku } from "@/lib/supabase/queries/equipment";
 import { CountAdjustModal } from "./CountAdjustModal";
+import { ReceiveStockModal } from "./ReceiveStockModal";
 
 type Preset =
   | "free"
@@ -15,6 +22,7 @@ type Preset =
 
 export function EquipmentCountActions({ sku }: { sku: EquipmentSku }) {
   const [openPreset, setOpenPreset] = useState<Preset | null>(null);
+  const [receiveOpen, setReceiveOpen] = useState(false);
   const router = useProgressRouter();
 
   const canMaintain = sku.available_units > 0;
@@ -24,6 +32,22 @@ export function EquipmentCountActions({ sku }: { sku: EquipmentSku }) {
 
   return (
     <>
+      <div>
+        <p className="font-mono uppercase text-caps-sm font-semibold tracking-[0.1em] text-slate mb-2 inline-flex items-center gap-1.5">
+          <PackagePlus size={14} strokeWidth={2} />
+          Stock
+        </p>
+
+        <button
+          type="button"
+          onClick={() => setReceiveOpen(true)}
+          className="inline-flex items-center justify-center gap-2 bg-navy text-white font-mono uppercase text-[14px] tracking-[0.12em] font-bold px-5 py-3 rounded transition-colors hover:bg-navy-deep active:bg-navy-deep w-full"
+        >
+          <PackagePlus size={15} strokeWidth={2} />
+          Receive new stock…
+        </button>
+      </div>
+
       <div>
         <p className="font-mono uppercase text-caps-sm font-semibold tracking-[0.1em] text-slate mb-2 inline-flex items-center gap-1.5">
           <ArrowRightLeft size={14} strokeWidth={2} />
@@ -78,6 +102,14 @@ export function EquipmentCountActions({ sku }: { sku: EquipmentSku }) {
           onClose={() => setOpenPreset(null)}
           sku={sku}
           preset={openPreset}
+          onSuccess={() => router.refresh()}
+        />
+      )}
+      {receiveOpen && (
+        <ReceiveStockModal
+          open={receiveOpen}
+          onClose={() => setReceiveOpen(false)}
+          sku={sku}
           onSuccess={() => router.refresh()}
         />
       )}

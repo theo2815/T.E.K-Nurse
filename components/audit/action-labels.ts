@@ -41,6 +41,7 @@ const LABELS: Record<string, string> = {
   count_adjusted: "Count adjusted",
   item_marked_lost: "Item marked lost",
   item_marked_maintenance: "Item marked for maintenance",
+  stock_received: "Stock received",
 
   // Account
   student_suspended: "Student suspended",
@@ -87,6 +88,7 @@ const TONE: Record<string, ActionTone> = {
   item_marked_lost: "alert",
   student_suspended: "alert",
   user_promoted_to_staff: "success",
+  stock_received: "success",
   user_demoted_to_student: "alert",
   sku_deleted: "alert",
   lot_deleted: "alert",

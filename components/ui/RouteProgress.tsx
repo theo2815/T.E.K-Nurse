@@ -67,8 +67,9 @@ export function RouteProgress() {
   return (
     <div
       aria-hidden
-      className="fixed top-0 left-0 right-0 h-[2px] z-[60] pointer-events-none"
+      className="fixed left-0 right-0 h-[2px] z-[60] pointer-events-none"
       style={{
+        top: "env(safe-area-inset-top, 0px)",
         opacity: targetOpacity,
         transition:
           phase === "fading"
