@@ -156,7 +156,7 @@ export default function AuthLayout({
             aria-hidden
             className="relative z-10 font-mono uppercase text-[12px] text-cyan/60 tracking-[0.15em] font-semibold"
           >
-            CIT.EDU · SCHOOL OF NURSING LAB
+            CIT-U · COLLEGE OF NURSING AND ALLIED HEALTH SCIENCES 
           </div>
         </aside>
 
